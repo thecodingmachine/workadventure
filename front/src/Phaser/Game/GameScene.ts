@@ -54,6 +54,7 @@ import {ConsoleGlobalMessageManager} from "../../Administration/ConsoleGlobalMes
 import {ResizableScene} from "../Login/ResizableScene";
 import {Room} from "../../Connexion/Room";
 import {jitsiFactory} from "../../WebRtc/JitsiFactory";
+import {EllipseTexture} from "../Components/EllipseTexture";
 
 export interface GameSceneInitInterface {
     initPosition: PointInterface|null
@@ -99,7 +100,7 @@ export class GameScene extends ResizableScene implements CenterListener {
     Layers!: Array<Phaser.Tilemaps.StaticTilemapLayer>;
     Objects!: Array<Phaser.Physics.Arcade.Sprite>;
     mapFile!: ITiledMap;
-    groups: Map<number, Sprite>;
+    groups: Map<number, EllipseTexture>;
     startX!: number;
     startY!: number;
     circleTexture!: CanvasTexture;
@@ -156,7 +157,7 @@ export class GameScene extends ResizableScene implements CenterListener {
 
         this.GameManager = gameManager;
         this.Terrains = [];
-        this.groups = new Map<number, Sprite>();
+        this.groups = new Map<number, EllipseTexture>();
         this.instance = room.getInstance();
 
         this.MapKey = MapUrlFile;
@@ -394,36 +395,8 @@ export class GameScene extends ResizableScene implements CenterListener {
         //initialise camera
         this.initCamera();
 
-        // Let's generate the circle for the group delimiter
-        let circleElement = Object.values(this.textures.list).find((object: Texture) => object.key === 'circleSprite-white');
-        if (circleElement) {
-            this.textures.remove('circleSprite-white');
-        }
-
-        circleElement = Object.values(this.textures.list).find((object: Texture) => object.key === 'circleSprite-red');
-        if (circleElement) {
-            this.textures.remove('circleSprite-red');
-        }
-
-        //create white circle canvas use to create sprite
-        this.circleTexture = this.textures.createCanvas('circleSprite-white', 96, 96);
-        const context = this.circleTexture.context;
-        context.beginPath();
-        context.arc(48, 48, 48, 0, 2 * Math.PI, false);
-        // context.lineWidth = 5;
-        context.strokeStyle = '#ffffff';
-        context.stroke();
-        this.circleTexture.refresh();
-
-        //create red circle canvas use to create sprite
-        this.circleRedTexture = this.textures.createCanvas('circleSprite-red', 96, 96);
-        const contextRed = this.circleRedTexture.context;
-        contextRed.beginPath();
-        contextRed.arc(48, 48, 48, 0, 2 * Math.PI, false);
-        // context.lineWidth = 5;
-        contextRed.strokeStyle = '#ff0000';
-        contextRed.stroke();
-        this.circleRedTexture.refresh();
+        //create canvas ellipse
+        EllipseTexture.createEllipseCanvas(this);
 
         // Let's pause the scene if the connection is not established yet
         if (this.connection === undefined) {
@@ -1125,21 +1098,37 @@ export class GameScene extends ResizableScene implements CenterListener {
     }
 
     private doShareGroupPosition(groupPositionMessage: GroupCreatedUpdatedMessageInterface) {
-        //delete previous group
-        this.doDeleteGroup(groupPositionMessage.groupId);
-
-        // TODO: circle radius should not be hard stored
-        //create new group
-        const sprite = new Sprite(
-            this,
-            Math.round(groupPositionMessage.position.x),
-            Math.round(groupPositionMessage.position.y),
-            groupPositionMessage.groupSize === 4 ? 'circleSprite-red' : 'circleSprite-white'
-        );
-        sprite.setDisplayOrigin(48, 48);
-        this.add.existing(sprite);
-        this.groups.set(groupPositionMessage.groupId, sprite);
-        return sprite;
+        let ellipse = this.groups.get(groupPositionMessage.groupId);
+        if(!ellipse) {
+            ellipse = new EllipseTexture(
+                this,
+                Math.round(groupPositionMessage.position.x),
+                Math.round(groupPositionMessage.position.y),
+                groupPositionMessage.groupSize
+            );
+        }else {
+            if (
+                (groupPositionMessage.groupSize > 3 && ellipse.groupSize > 3)
+                || (groupPositionMessage.groupSize < 4 && ellipse.groupSize < 4)
+            ) {
+                ellipse.update(
+                    Math.round(groupPositionMessage.position.x),
+                    Math.round(groupPositionMessage.position.y),
+                    groupPositionMessage.groupSize
+                );
+            } else {
+                //delete previous group
+                this.doDeleteGroup(groupPositionMessage.groupId);
+                ellipse = new EllipseTexture(
+                    this,
+                    Math.round(groupPositionMessage.position.x),
+                    Math.round(groupPositionMessage.position.y),
+                    groupPositionMessage.groupSize
+                );
+            }
+        }
+        this.groups.set(groupPositionMessage.groupId, ellipse);
+        return ellipse;
     }
 
     deleteGroup(groupId: number): void {
