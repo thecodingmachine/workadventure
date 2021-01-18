@@ -25,6 +25,8 @@ import {
     TeleportMessageMessage,
     QueryJitsiJwtMessage,
     SendJitsiJwtMessage,
+    JoinBBBMeetingMessage,
+    BBBMeetingClientURLMessage,
     CharacterLayerMessage,
     PingMessage,
     SendUserMessage
@@ -186,6 +188,8 @@ export class RoomConnection implements RoomConnection {
                 this.dispatch(EventMessage.START_JITSI_ROOM, message.getSendjitsijwtmessage());
             } else if (message.hasSendusermessage()) {
                 this.dispatch(EventMessage.USER_MESSAGE, message.getSendusermessage());
+            } else if (message.hasBbbmeetingclienturlmessage()) {
+                this.dispatch(EventMessage.BBB_MEETING_CLIENT_URL, message.getBbbmeetingclienturlmessage());
             } else {
                 throw new Error('Unknown message received');
             }
@@ -577,6 +581,29 @@ export class RoomConnection implements RoomConnection {
     public onStartJitsiRoom(callback: (jwt: string, room: string) => void): void {
         this.onMessage(EventMessage.START_JITSI_ROOM, (message: SendJitsiJwtMessage) => {
             callback(message.getJwt(), message.getJitsiroom());
+        });
+    }
+
+    public emitJoinBBBMeeting(meetingId: string, props: Map<string, string | number | boolean>): void {
+        const joinBBBMeetingMessage = new JoinBBBMeetingMessage();
+        joinBBBMeetingMessage.setMeetingid(meetingId);
+
+        const userdataMap = joinBBBMeetingMessage.getUserdataMap();
+        props.forEach((value, key) => {
+            if (key.startsWith('userdata-bbb_')) {
+                userdataMap.set(key, value.toString());
+            }
+        });
+
+        const clientToServerMessage = new ClientToServerMessage();
+        clientToServerMessage.setJoinbbbmeetingmessage(joinBBBMeetingMessage);
+
+        this.socket.send(clientToServerMessage.serializeBinary().buffer);
+    }
+
+    public onBBBMeetingClientURL(callback: (meetingId: string, clientURL: string) => void): void {
+        this.onMessage(EventMessage.BBB_MEETING_CLIENT_URL, (message: BBBMeetingClientURLMessage) => {
+            callback(message.getMeetingid(), message.getClienturl());
         });
     }
 

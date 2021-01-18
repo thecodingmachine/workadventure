@@ -12,7 +12,10 @@ import {
     WebRtcSignalToServerMessage,
     PlayGlobalMessage,
     ReportPlayerMessage,
-    QueryJitsiJwtMessage, SendUserMessage, ServerToClientMessage
+    QueryJitsiJwtMessage,
+    JoinBBBMeetingMessage,
+    SendUserMessage,
+    ServerToClientMessage
 } from "../Messages/generated/messages_pb";
 import {UserMovesMessage} from "../Messages/generated/messages_pb";
 import {TemplatedApp} from "uWebSockets.js"
@@ -308,7 +311,10 @@ export class IoSocketController {
                     socketManager.handleReportMessage(client, message.getReportplayermessage() as ReportPlayerMessage);
                 } else if (message.hasQueryjitsijwtmessage()){
                     socketManager.handleQueryJitsiJwtMessage(client, message.getQueryjitsijwtmessage() as QueryJitsiJwtMessage);
-                }
+                } else if (message.hasJoinbbbmeetingmessage()){
+                    socketManager.handleJoinBBBMeetingMessage(client, message.getJoinbbbmeetingmessage() as JoinBBBMeetingMessage);
+		}
+
 
                     /* Ok is false if backpressure was built up, wait for drain */
                 //let ok = ws.send(message, isBinary);

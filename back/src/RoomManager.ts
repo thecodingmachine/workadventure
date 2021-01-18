@@ -9,6 +9,7 @@ import {
     PlayGlobalMessage,
     PusherToBackMessage,
     QueryJitsiJwtMessage,
+    JoinBBBMeetingMessage,
     ReportPlayerMessage,
     RoomJoinedMessage,
     ServerToAdminClientMessage,
@@ -74,6 +75,8 @@ const roomManager: IRoomManagerServer = {
                         socketManager.handleReportMessage(client, message.getReportplayermessage() as ReportPlayerMessage);*/
                     } else if (message.hasQueryjitsijwtmessage()){
                         socketManager.handleQueryJitsiJwtMessage(user, message.getQueryjitsijwtmessage() as QueryJitsiJwtMessage);
+                    } else if (message.hasJoinbbbmeetingmessage()) {
+                        socketManager.handleJoinBBBMeetingMessage(user, message.getJoinbbbmeetingmessage() as JoinBBBMeetingMessage);
                     } else {
                         throw new Error('Unhandled message type');
                     }

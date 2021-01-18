@@ -25,6 +25,7 @@ import {
     WebRtcStartMessage,
     QueryJitsiJwtMessage,
     SendJitsiJwtMessage,
+    JoinBBBMeetingMessage,
     SendUserMessage,
     JoinRoomMessage,
     CharacterLayerMessage,
@@ -538,6 +539,13 @@ export class SocketManager implements ZoneEventListener {
         serverToClientMessage.setSendjitsijwtmessage(sendJitsiJwtMessage);
 
         client.send(serverToClientMessage.serializeBinary().buffer, true);
+    }
+
+    public handleJoinBBBMeetingMessage(client: ExSocketInterface, joinBBBMeetingMessage: JoinBBBMeetingMessage) {
+        const pusherToBackMessage = new PusherToBackMessage();
+        pusherToBackMessage.setJoinbbbmeetingmessage(joinBBBMeetingMessage);
+
+        client.backConnection.write(pusherToBackMessage);
     }
 
     public async emitSendUserMessage(userUuid: string, message: string, roomId: string): Promise<void> {

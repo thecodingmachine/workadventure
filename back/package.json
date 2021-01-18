@@ -38,6 +38,7 @@
   "homepage": "https://github.com/thecodingmachine/workadventure#readme",
   "dependencies": {
     "axios": "^0.21.1",
+    "bigbluebutton-js": "^0.1.1",
     "body-parser": "^1.19.0",
     "busboy": "^0.3.1",
     "circular-json": "^0.5.9",

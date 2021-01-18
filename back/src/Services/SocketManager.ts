@@ -25,6 +25,8 @@ import {
     WebRtcStartMessage,
     QueryJitsiJwtMessage,
     SendJitsiJwtMessage,
+    JoinBBBMeetingMessage,
+    BBBMeetingClientURLMessage,
     SendUserMessage,
     JoinRoomMessage,
     Zone as ProtoZone,
@@ -43,6 +45,9 @@ import {PositionInterface} from "../Model/PositionInterface";
 import {adminApi, CharacterTexture, FetchMemberDataByUuidResponse} from "./AdminApi";
 import Jwt from "jsonwebtoken";
 import {JITSI_URL} from "../Enum/EnvironmentVariable";
+const Bbb = require("bigbluebutton-js"); // @types/bigbluebutton-js doesn't exist yet
+import {BBB_URL, BBB_SECRET} from "../Enum/EnvironmentVariable";
+const hashjs = require('hash.js'); // @types/hash.js doesn't exist yet
 import {clientEventsEmitter} from "./ClientEventsEmitter";
 import {gaugeManager} from "./GaugeManager";
 import {AdminSocket, ZoneSocket} from "../RoomManager";
@@ -622,6 +627,45 @@ export class SocketManager {
 
         const serverToClientMessage = new ServerToClientMessage();
         serverToClientMessage.setSendjitsijwtmessage(sendJitsiJwtMessage);
+
+        user.socket.write(serverToClientMessage);
+    }
+
+    public async handleJoinBBBMeetingMessage(user: User, joinBBBMeetingMessage: JoinBBBMeetingMessage) {
+        const meetingId = joinBBBMeetingMessage.getMeetingid();
+        const userdata = joinBBBMeetingMessage.getUserdataMap();
+
+        const api = Bbb.api(BBB_URL, BBB_SECRET);
+        const attendeePW = hashjs.sha256().update(`attendee-${meetingId}-${BBB_SECRET}`).digest('hex');
+        const moderatorPW = hashjs.sha256().update(`moderator-${meetingId}-${BBB_SECRET}`).digest('hex')
+
+        // This is idempotent, so we call it on each join in order to be sure that the meeting exists.
+        const meetingName = meetingId;
+        await Bbb.http(api.administration.create(meetingId, meetingId, { attendeePW, moderatorPW }));
+
+        // Add userdata properties sent by the client.
+        const joinParams: Record<string, string> = {};
+        userdata.forEach((value, key) => {
+            if (key.startsWith('userdata-bbb_')) {
+                joinParams[key] = value;
+            }
+        });
+
+        // XXX: figure out how to know if the user has admin status and use the moderatorPW
+        // in that case
+        const clientURL = api.administration.join(
+            user.name, meetingId, moderatorPW,
+            { ...joinParams,
+              userID: user.id,
+              joinViaHtml5: true
+            });
+
+        const bbbMeetingClientURLMessage = new BBBMeetingClientURLMessage();
+        bbbMeetingClientURLMessage.setMeetingid(meetingId);
+        bbbMeetingClientURLMessage.setClienturl(clientURL);
+
+        const serverToClientMessage = new ServerToClientMessage();
+        serverToClientMessage.setBbbmeetingclienturlmessage(bbbMeetingClientURLMessage);
 
         user.socket.write(serverToClientMessage);
     }
