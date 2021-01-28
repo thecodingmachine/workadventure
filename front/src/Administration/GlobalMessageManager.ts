@@ -1,6 +1,6 @@
 import {HtmlUtils} from "./../WebRtc/HtmlUtils";
 import {AUDIO_TYPE, MESSAGE_TYPE} from "./ConsoleGlobalMessageManager";
-import {API_URL, UPLOADER_URL} from "../Enum/EnvironmentVariable";
+import {UPLOADER_URL} from "../Enum/EnvironmentVariable";
 import {RoomConnection} from "../Connexion/RoomConnection";
 import {PlayGlobalMessageInterface} from "../Connexion/ConnexionModels";
 

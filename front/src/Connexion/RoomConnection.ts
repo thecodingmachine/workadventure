@@ -1,5 +1,6 @@
 import {API_URL, UPLOADER_URL} from "../Enum/EnvironmentVariable";
 import Axios from "axios";
+import qs = require("qs");
 import {
     BatchMessage,
     ClientToServerMessage,
@@ -49,7 +50,7 @@ export class RoomConnection implements RoomConnection {
     private readonly socket: WebSocket;
     private userId: number|null = null;
     private listeners: Map<string, Function[]> = new Map<string, Function[]>();
-    private static websocketFactory: null|((url: string)=>any) = null; // eslint-disable-line @typescript-eslint/no-explicit-any
+    private static websocketFactory: ((url: string) => WebSocket) = (url) => new WebSocket(url);
     private closed: boolean = false;
     private tags: string[] = [];
 
@@ -63,27 +64,33 @@ export class RoomConnection implements RoomConnection {
      * @param roomId The ID of the room in the form "_/[instance]/[map_url]" or "@/[org]/[event]/[map]"
      */
     public constructor(token: string|null, roomId: string, name: string, characterLayers: string[], position: PositionInterface, viewport: ViewportInterface) {
-        let url = API_URL.replace('http://', 'ws://').replace('https://', 'wss://');
-        url += '/room';
-        url += '?roomId='+(roomId ?encodeURIComponent(roomId):'');
-        url += '&token='+(token ?encodeURIComponent(token):'');
-        url += '&name='+encodeURIComponent(name);
-        for (const layer of characterLayers) {
-            url += '&characterLayers='+encodeURIComponent(layer);
-        }
-        url += '&x='+Math.floor(position.x);
-        url += '&y='+Math.floor(position.y);
-        url += '&top='+Math.floor(viewport.top);
-        url += '&bottom='+Math.floor(viewport.bottom);
-        url += '&left='+Math.floor(viewport.left);
-        url += '&right='+Math.floor(viewport.right);
-
-        if (RoomConnection.websocketFactory) {
-            this.socket = RoomConnection.websocketFactory(url);
-        } else {
-            this.socket = new WebSocket(url);
+        const url = new URL("/room", API_URL);
+        switch (url.protocol) {
+            case "http:":
+                url.protocol = "ws:";
+                break;
+            case "https:":
+                url.protocol = "wss:";
+                break;
         }
 
+        const { x, y } = position;
+        const { top, bottom, left, right } = viewport;
+        const params = {
+            roomId,
+            token,
+            name,
+            characterLayers,
+            x: Math.floor(x),
+            y: Math.floor(y),
+            top: Math.floor(top),
+            bottom: Math.floor(bottom),
+            left: Math.floor(left),
+            right: Math.floor(right),
+        };
+        url.search = qs.stringify(params, { addQueryPrefix: true, arrayFormat: "repeat" });
+
+        this.socket = RoomConnection.websocketFactory(url.toString());
         this.socket.binaryType = 'arraybuffer';
 
         let interval: ReturnType<typeof setInterval>|undefined = undefined;
@@ -583,7 +590,7 @@ export class RoomConnection implements RoomConnection {
     public hasTag(tag: string): boolean {
         return this.tags.includes(tag);
     }
-    
+
     public isAdmin(): boolean {
         return this.hasTag('admin');
     }
