@@ -69,6 +69,7 @@ import FILE_LOAD_ERROR = Phaser.Loader.Events.FILE_LOAD_ERROR;
 import DOMElement = Phaser.GameObjects.DOMElement;
 import {Subscription} from "rxjs";
 import {worldFullMessageStream} from "../../Connexion/WorldFullMessageStream";
+import { InteractiveLayer } from "../Map/InteractiveLayer";
 
 export interface GameSceneInitInterface {
     initPosition: PointInterface|null,
@@ -114,6 +115,7 @@ export class GameScene extends ResizableScene implements CenterListener {
     MapPlayersByKey : Map<number, RemotePlayer> = new Map<number, RemotePlayer>();
     Map!: Phaser.Tilemaps.Tilemap;
     Layers!: Array<Phaser.Tilemaps.StaticTilemapLayer>;
+    interactiveLayers!: Array<InteractiveLayer>;
     Objects!: Array<Phaser.Physics.Arcade.Sprite>;
     mapFile!: ITiledMap;
     groups: Map<number, Sprite>;
@@ -367,18 +369,24 @@ export class GameScene extends ResizableScene implements CenterListener {
 
         //add layer on map
         this.Layers = new Array<Phaser.Tilemaps.StaticTilemapLayer>();
+        this.interactiveLayers = new Array<InteractiveLayer>();
+
         let depth = -2;
         for (const layer of this.mapFile.layers) {
             if (layer.type === 'tilelayer') {
-                this.addLayer(this.Map.createStaticLayer(layer.name, this.Terrains, 0, 0).setDepth(depth));
+                if (this.isLayerInteractive(layer) === false) {
+                    this.addLayer(this.Map.createStaticLayer(layer.name, this.Terrains, 0, 0).setDepth(depth));
 
-                const exitSceneUrl = this.getExitSceneUrl(layer);
-                if (exitSceneUrl !== undefined) {
-                    this.loadNextGame(exitSceneUrl);
-                }
-                const exitUrl = this.getExitUrl(layer);
-                if (exitUrl !== undefined) {
-                    this.loadNextGame(exitUrl);
+                    const exitSceneUrl = this.getExitSceneUrl(layer);
+                    if (exitSceneUrl !== undefined) {
+                        this.loadNextGame(exitSceneUrl);
+                    }
+                    const exitUrl = this.getExitUrl(layer);
+                    if (exitUrl !== undefined) {
+                        this.loadNextGame(exitUrl);
+                    }
+                } else {
+                    this.addInteractiveLayer(this.createInteractiveLayer(layer).setDepth(depth));
                 }
             }
             if (layer.type === 'objectgroup' && layer.name === 'floorLayer') {
@@ -930,6 +938,10 @@ ${escapedMessage}
         return this.getProperty(layer, "exitUrl") as string|undefined;
     }
 
+    private isLayerInteractive(layer: ITiledMapLayer): boolean {
+        return Boolean(this.getProperty(layer, "interactive"));
+    }
+
     /**
      * @deprecated the map property exitSceneUrl is deprecated
      */
@@ -1008,6 +1020,14 @@ ${escapedMessage}
 
     addLayer(Layer : Phaser.Tilemaps.StaticTilemapLayer){
         this.Layers.push(Layer);
+    }
+
+    createInteractiveLayer(layer: ITiledMapLayer): InteractiveLayer {
+        return new InteractiveLayer(this, layer);
+    }
+
+    addInteractiveLayer(layer: InteractiveLayer): void {
+        this.interactiveLayers.push(layer);
     }
 
     createCollisionWithPlayer() {
