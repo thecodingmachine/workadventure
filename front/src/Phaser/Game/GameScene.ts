@@ -718,6 +718,13 @@ export class GameScene extends ResizableScene implements CenterListener {
                 }
             }
         });
+        this.gameMap.onPropertyChange('inGameConsoleMessage', (newValue, oldValue, allProps) => {
+            if (newValue !== undefined) {
+                layoutManager.addInGameConsoleMessage('inGameConsoleMessage', newValue.toString(), "font-size: 30px;max-width: 100%; margin-left: auto;");
+            } else {
+                layoutManager.removeInGameConsoleMessage('inGameConsoleMessage');
+            }
+        });
         this.gameMap.onPropertyChange('jitsiRoom', (newValue, oldValue, allProps) => {
             if (newValue === undefined) {
                 layoutManager.removeActionButton('jitsiRoom', this.userInputManager);
