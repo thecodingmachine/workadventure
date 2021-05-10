@@ -130,4 +130,28 @@ export class AuthenticateController extends BaseController {
             }));
         });
     }
+
+    private signIn(){
+        this.App.options("/signin", (res: HttpResponse, req: HttpRequest) => {
+            this.addCorsHeaders(res);
+
+            res.end();
+        });
+
+        this.App.post("/signin", (res: HttpResponse, req: HttpRequest) => {
+
+            res.onAborted(() => {
+                console.warn('Login request was aborted');
+            })
+
+            const userUuid = v4();
+            const authToken = jwtTokenManager.createJWTToken(userUuid);
+            res.writeStatus("200 OK");
+            this.addCorsHeaders(res);
+            res.end(JSON.stringify({
+                authToken,
+                userUuid,
+            }));
+        });
+    }
 }

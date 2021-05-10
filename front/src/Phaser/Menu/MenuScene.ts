@@ -16,6 +16,9 @@ const gameMenuIconKey = 'gameMenuIcon';
 const gameSettingsMenuKey = 'gameSettingsMenu';
 const gameShare = 'gameShare';
 
+const gameLogintKey = 'gameLogin';
+const gameLogintRessource = 'resources/html/gameLogin.html';
+
 const closedSideMenuX = -1000;
 const openedSideMenuX = 0;
 
@@ -27,6 +30,8 @@ export class MenuScene extends Phaser.Scene {
     private gameQualityMenuElement!: Phaser.GameObjects.DOMElement;
     private gameShareElement!: Phaser.GameObjects.DOMElement;
     private gameReportElement!: ReportMenu;
+    private gameLoginElement!: Phaser.GameObjects.DOMElement;
+    private gameLoginOpened : boolean = false;
     private sideMenuOpened = false;
     private settingsMenuOpened = false;
     private gameShareOpened = false;
@@ -49,6 +54,7 @@ export class MenuScene extends Phaser.Scene {
         this.load.html(gameSettingsMenuKey, 'resources/html/gameQualityMenu.html');
         this.load.html(gameShare, 'resources/html/gameShare.html');
         this.load.html(gameReportKey, gameReportRessource);
+        this.load.html(gameLogintKey, gameLogintRessource);
         this.load.html(warningContainerKey, warningContainerHtml);
     }
 
@@ -78,6 +84,18 @@ export class MenuScene extends Phaser.Scene {
         mediaManager.setShowReportModalCallBacks((userId, userName) => {
             this.closeAll();
             this.gameReportElement.open(parseInt(userId), userName);
+        });
+
+        //create login form object
+        this.gameLoginElement = this.add.dom(middleX, -400).createFromCache(gameLogintKey);
+        MenuScene.revealMenusAfterInit(this.gameLoginElement, gameLogintKey);
+        this.gameLoginElement.addListener('click');
+        this.gameLoginElement.on('click',  (event:MouseEvent) => {
+            event.preventDefault();
+            if ((event?.target as HTMLInputElement).id === 'gameLoginFormCancel') {
+            } else if((event?.target as HTMLInputElement).id === 'gameLoginFormRegister') {
+            } else if((event?.target as HTMLInputElement).id === 'gameLoginFormSubmit') {
+            }
         });
 
         this.input.keyboard.on('keyup-TAB', () => {
@@ -303,6 +321,9 @@ export class MenuScene extends Phaser.Scene {
             case 'adminConsoleButton':
                 gameManager.getCurrentGameScene(this).ConsoleGlobalMessageManager.activeMessageConsole();
                 break;
+            case 'loginButton':
+                this.toggleLogin();
+                break;
         }
     }
 
@@ -337,6 +358,7 @@ export class MenuScene extends Phaser.Scene {
     private closeAll(){
         this.closeGameQualityMenu();
         this.closeGameShare();
+        this.closeLogin();
         this.gameReportElement.close();
     }
 
@@ -353,5 +375,54 @@ export class MenuScene extends Phaser.Scene {
 
     public isDirty(): boolean {
         return false;
+    }
+
+
+    /** LOGIN HTML ELEMENT **/
+    public toggleLogin(): void {
+        const mainEl = this.gameLoginElement.getChildByID('gameLogin') as HTMLElement;
+        if(!this.gameLoginOpened){
+            this.openLogin();
+        }else{
+            this.closeLogin();
+        }
+        this.gameLoginOpened = !this.gameLoginOpened;
+    }
+
+    public openLogin(): void {
+        const mainEl = this.gameLoginElement.getChildByID('gameLogin') as HTMLElement;
+        this.tweens.add({
+            targets: this.gameLoginElement,
+            y: this.getCenteredY(mainEl),
+            x: this.getMiddleX(mainEl),
+            duration: 1000,
+            ease: 'Power3'
+        });
+    }
+
+    public closeLogin(): void {
+        const mainEl = this.gameLoginElement.getChildByID('gameLogin') as HTMLElement;
+        this.tweens.add({
+            targets: this.gameLoginElement,
+            y: this.getHiddenY(mainEl),
+            x: this.getMiddleX(mainEl),
+            duration: 1000,
+            ease: 'Power3'
+        });
+    }
+
+    private getHiddenY(mainEl: HTMLElement): number {
+        return - mainEl.clientHeight - 100;
+    }
+    private getCenteredY(mainEl: HTMLElement): number {
+        return window.innerHeight / 4 - mainEl.clientHeight / 2;
+    }
+    private getMiddleX(mainEl: HTMLElement) : number{
+        return (this.scale.width / 2) -
+        (
+            mainEl && mainEl.clientWidth && mainEl.clientWidth > 0
+            ? (mainEl.clientWidth / (2 * this.scale.zoom))
+            : (400 / 2)
+        );
     }
 }

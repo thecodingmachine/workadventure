@@ -114,7 +114,7 @@ export class HelpCameraSettingsScene extends DirtyScene {
         this.tweens.add({
             targets: this.helpCameraSettingsElement,
             x: middleX,
-            y: middleY,
+            y: this.helpCameraSettingsOpened ? middleY : -1000,
             duration: 1000,
             ease: 'Power3'
         });

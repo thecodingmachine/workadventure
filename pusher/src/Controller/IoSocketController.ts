@@ -375,6 +375,7 @@ export class IoSocketController {
         client.companion = ws.companion;
         client.roomId = ws.roomId;
         client.listenedZones = new Set<Zone>();
+        client.JWToken = undefined;
         return client;
     }
 }

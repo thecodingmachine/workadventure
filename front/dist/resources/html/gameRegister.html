@@ -1,0 +1,117 @@
+<style>
+    *{
+        font-family: 'Open Sans', sans-serif;
+        cursor: url('/resources/logos/cursor_normal.png'), auto;
+    }
+    * a, button, input{
+        cursor: url('/resources/logos/cursor_pointer.png'), pointer;
+    }
+    #gameRegister {
+        background: #eceeee;
+        border: 1px solid #42464b;
+        border-radius: 6px;
+        margin: 20px auto 0;
+        width: 298px;
+        height: 340px;
+    }
+    #gameRegister .cautiousText {
+        font-size: 50%;
+    }
+    #gameRegister h1 {
+        background-image: linear-gradient(top, #f1f3f3, #d4dae0);
+        border-bottom: 1px solid #a6abaf;
+        border-radius: 6px 6px 0 0;
+        box-sizing: border-box;
+        color: #727678;
+        display: block;
+        height: 43px;
+        padding-top: 10px;
+        margin: 0;
+        text-align: center;
+        text-shadow: 0 -1px 0 rgba(0,0,0,0.2), 0 1px 0 #fff;
+    }
+    #gameRegister input {
+        font-size: 70%;
+        background: linear-gradient(top, #d6d7d7, #dee0e0);
+        border: 1px solid #a1a3a3;
+        border-radius: 4px;
+        box-shadow: 0 1px #fff;
+        box-sizing: border-box;
+        color: #696969;
+        height: 30px;
+        transition: box-shadow 0.3s;
+        width: 100%;
+    }
+    #gameRegister section {
+        margin: 10px;
+    }
+    #gameRegister section.action{
+        text-align: center;
+        margin: 0;
+    }
+    #gameRegister button {
+        margin-top: 10px;
+        background-color: black;
+        color: white;
+        border-radius: 7px;
+        padding-bottom: 4px;
+        width: 60px;
+    }
+    #gameRegister button#gameRegisterFormCancel {
+        background-color: #c7c7c700;
+        color: #292929;
+    }
+    #gameRegister section a{
+        text-align: center;
+        font-size: 12px;
+        margin: 0 6px;
+        color: black;
+    }
+    #gameRegister section h6,
+    #gameRegister section h5{
+        margin: 1px;
+    }
+    #gameRegister section.text-center{
+        text-align: center;
+    }
+    #gameRegister section p{
+        font-size: 8px;
+        margin: 0px 70px;
+    }
+    #gameRegister section p.err{
+        color: red;
+        display: none;
+    }
+    #gameRegister section p.info{
+        display: none;
+    }
+</style>
+
+<form id="gameRegister" hidden>
+    <section class="text-center">
+        <h5>Sign in WorkAdventure</h5>
+        <p>Sign in WorkAdventure and share your friends / colleagues</p>
+        <p class="err" id="gameRegisterError"></p>
+        <p class="info" id="gameRegisterInfo"></p>
+    </section>
+    <section>
+        <h6>Name*</h6>
+        <input type="text" name="email" id="gameRegisterName">
+    </section>
+    <section>
+        <h6>Email*</h6>
+        <input type="email" name="email" id="gameRegisterEmail">
+    </section>
+    <section>
+        <h6>Password*</h6>
+        <input type="password" name="password" id="gameRegisterPassword">
+    </section>
+    <section>
+        <h6>Confirm password*</h6>
+        <input type="password" name="password" id="gameRegisterConfirmPassword">
+    </section>
+    <section class="action">
+        <button type="submit" id="gameRegisterFormSubmit">Sign In</button>
+        <a href="#" id="gameRegisterFormCancel">Login</a>
+    </section>
+</form>

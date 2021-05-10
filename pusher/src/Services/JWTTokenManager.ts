@@ -6,8 +6,12 @@ import {adminApi, AdminBannedData} from "../Services/AdminApi";
 
 class JWTTokenManager {
 
-    public createJWTToken(userUuid: string) {
-        return Jwt.sign({userUuid: userUuid}, SECRET_KEY, {expiresIn: '200d'}); //todo: add a mechanic to refresh or recreate token
+    public createJWTToken(userUuid: string, email?: string, name?: string) {
+        return Jwt.sign({
+            userUuid: userUuid,
+            email: email || null,
+            name: name || null,
+        }, SECRET_KEY, {expiresIn: '200d'}); //todo: add a mechanic to refresh or recreate token
     }
 
     public async getUserUuidFromToken(token: unknown, ipAddress?: string, room?: string): Promise<string> {
