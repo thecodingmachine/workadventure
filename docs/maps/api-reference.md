@@ -235,3 +235,27 @@ mySound.play(config);
 // ...
 mySound.stop();
 ```
+
+
+### register additional menu entries
+
+adds an additional Entry to the main menu , these exist until the map is unloaded
+
+
+```typescript
+registerMenuCommand(menuCommand: string, callback: (menuCommand: string) => void): void
+```
+Example:
+
+
+```javascript
+
+WA.registerMenuCommand("test", () => {
+    WA.sendChatMessage("test clicked", "menu cmd")
+})
+
+```
+
+<div class="col">
+    <img src="./assets/menu-command.png" class="figure-img img-fluid rounded" alt="" />
+</div>

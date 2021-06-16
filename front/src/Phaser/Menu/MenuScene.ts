@@ -9,6 +9,9 @@ import {connectionManager} from "../../Connexion/ConnectionManager";
 import {GameConnexionTypes} from "../../Url/UrlManager";
 import {WarningContainer, warningContainerHtml, warningContainerKey} from "../Components/WarningContainer";
 import {worldFullWarningStream} from "../../Connexion/WorldFullWarningStream";
+import { HtmlUtils } from '../../WebRtc/HtmlUtils';
+import { iframeListener } from '../../Api/IframeListener';
+import { Subscription } from 'rxjs';
 import {menuIconVisible} from "../../Stores/MenuStore";
 import {videoConstraintStore} from "../../Stores/MediaStore";
 
@@ -37,12 +40,17 @@ export class MenuScene extends Phaser.Scene {
     private menuButton!: Phaser.GameObjects.DOMElement;
     private warningContainer: WarningContainer | null = null;
     private warningContainerTimeout: NodeJS.Timeout | null = null;
-
+    private subscriptions = new Subscription()
     constructor() {
         super({key: MenuSceneName});
 
         this.gameQualityValue = localUserStore.getGameQualityValue();
         this.videoQualityValue = localUserStore.getVideoQualityValue();
+
+        this.subscriptions.add(iframeListener.registerMenuCommandStream.subscribe(menuCommand => {
+            this.addMenuOption(menuCommand);
+
+        }))
     }
 
     preload () {
@@ -52,6 +60,13 @@ export class MenuScene extends Phaser.Scene {
         this.load.html(gameShare, 'resources/html/gameShare.html');
         this.load.html(gameReportKey, gameReportRessource);
         this.load.html(warningContainerKey, warningContainerHtml);
+    }
+
+    reset() {
+        const addedMenuItems=[...this.menuElement.node.querySelectorAll(".fromApi")];
+        for(let index=addedMenuItems.length-1;index>=0;index--){
+            addedMenuItems[index].remove()
+        }
     }
 
     create() {
@@ -269,13 +284,30 @@ export class MenuScene extends Phaser.Scene {
         });
     }
 
-    private onMenuClick(event:MouseEvent) {
-        if((event?.target as HTMLInputElement).classList.contains('not-button')){
+    public addMenuOption(menuText: string) {
+        const wrappingSection = document.createElement("section")
+        const excapedHtml = HtmlUtils.escapeHtml(menuText);
+        wrappingSection.innerHTML = `<button class="fromApi" id="${excapedHtml}">${excapedHtml}</button>`
+        const menuItemContainer = this.menuElement.node.querySelector("#gameMenu main");
+        if (menuItemContainer) {
+            menuItemContainer.querySelector(`#${excapedHtml}.fromApi`)?.remove()
+            menuItemContainer.insertBefore(wrappingSection, menuItemContainer.querySelector("#socialLinks"))
+        }
+    }
+
+    private onMenuClick(event: MouseEvent) {
+        const htmlMenuItem = (event?.target as HTMLInputElement);
+        if (htmlMenuItem.classList.contains('not-button')) {
             return;
         }
         event.preventDefault();
 
-        switch ((event?.target as HTMLInputElement).id) {
+        if (htmlMenuItem.classList.contains("fromApi")) {
+            iframeListener.sendMenuClickedEvent(htmlMenuItem.id)
+            return
+        }
+
+        switch (htmlMenuItem.id) {
             case 'changeNameButton':
                 this.closeSideMenu();
                 gameManager.leaveGame(this, LoginSceneName, new LoginScene());

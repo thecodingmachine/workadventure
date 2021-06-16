@@ -5,6 +5,8 @@ import type { ChatEvent } from './ChatEvent';
 import type { ClosePopupEvent } from './ClosePopupEvent';
 import type { EnterLeaveEvent } from './EnterLeaveEvent';
 import type { GoToPageEvent } from './GoToPageEvent';
+import type { MenuItemClickedEvent } from './MenuItemClickedEvent';
+import type { MenuItemRegisterEvent } from './MenuItemRegisterEvent';
 import type { OpenCoWebSiteEvent } from './OpenCoWebSiteEvent';
 import type { OpenPopupEvent } from './OpenPopupEvent';
 import type { OpenTabEvent } from './OpenTabEvent';
@@ -20,6 +22,7 @@ export interface TypedMessageEvent<T> extends MessageEvent {
 export type IframeEventMap = {
     //getState: GameStateEvent,
     // updateTile: UpdateTileEvent
+    registerMenuCommand: MenuItemRegisterEvent
     chat: ChatEvent,
     openPopup: OpenPopupEvent
     closePopup: ClosePopupEvent
@@ -49,6 +52,7 @@ export interface IframeResponseEventMap {
     enterEvent: EnterLeaveEvent
     leaveEvent: EnterLeaveEvent
     buttonClickedEvent: ButtonClickedEvent
+    menuItemClicked: MenuItemClickedEvent
     // gameState: GameStateEvent
 }
 export interface IframeResponseEvent<T extends keyof IframeResponseEventMap> {

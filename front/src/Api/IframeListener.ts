@@ -12,6 +12,10 @@ import { GoToPageEvent, isGoToPageEvent } from "./Events/GoToPageEvent";
 import { isOpenCoWebsite, OpenCoWebSiteEvent } from "./Events/OpenCoWebSiteEvent";
 import { IframeEventMap, IframeEvent, IframeResponseEvent, IframeResponseEventMap, isIframeEventWrapper, TypedMessageEvent } from "./Events/IframeEvent";
 import type { UserInputChatEvent } from "./Events/UserInputChatEvent";
+import { isMenuItemRegisterEvent } from './Events/MenuItemRegisterEvent';
+import type { MenuItemClickedEvent } from './Events/MenuItemClickedEvent';
+
+
 import {isPlaySoundEvent, PlaySoundEvent} from "./Events/PlaySoundEvent";
 import {isStopSoundEvent, StopSoundEvent} from "./Events/StopSoundEvent";
 import {isLoadSoundEvent, LoadSoundEvent} from "./Events/LoadSoundEvent";
@@ -53,6 +57,8 @@ class IframeListener {
     private readonly _removeBubbleStream: Subject<void> = new Subject();
     public readonly removeBubbleStream = this._removeBubbleStream.asObservable();
 
+    private readonly _registerMenuCommandStream: Subject<string> = new Subject();
+    public readonly registerMenuCommandStream = this._registerMenuCommandStream.asObservable();
     private readonly _playSoundStream: Subject<PlaySoundEvent> = new Subject();
     public readonly playSoundStream = this._playSoundStream.asObservable();
 
@@ -132,6 +138,8 @@ class IframeListener {
                 }
                 else if (payload.type === 'removeBubble') {
                     this._removeBubbleStream.next();
+                } else if (payload.type == "registerMenuCommand" && isMenuItemRegisterEvent(payload.data)) {
+                    this._registerMenuCommandStream.next(payload.data.menutItem)
                 }
             }
 
@@ -214,6 +222,15 @@ class IframeListener {
         iframe.remove();
 
         this.scripts.delete(scriptUrl);
+    }
+
+    sendMenuClickedEvent(menuItem: string) {
+        this.postMessage({
+            'type': 'menuItemClicked',
+            'data': {
+                menuItem: menuItem,
+            } as MenuItemClickedEvent
+        });
     }
 
     sendUserInputChat(message: string) {

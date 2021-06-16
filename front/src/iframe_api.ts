@@ -9,6 +9,8 @@ import type { ClosePopupEvent } from "./Api/Events/ClosePopupEvent";
 import type { OpenTabEvent } from "./Api/Events/OpenTabEvent";
 import type { GoToPageEvent } from "./Api/Events/GoToPageEvent";
 import type { OpenCoWebSiteEvent } from "./Api/Events/OpenCoWebSiteEvent";
+import { isMenuItemClickedEvent } from './Api/Events/MenuItemClickedEvent';
+import type { MenuItemRegisterEvent } from './Api/Events/MenuItemRegisterEvent';
 import type {PlaySoundEvent} from "./Api/Events/PlaySoundEvent";
 import type  {StopSoundEvent} from "./Api/Events/StopSoundEvent";
 import type {LoadSoundEvent} from "./Api/Events/LoadSoundEvent";
@@ -28,6 +30,7 @@ interface WorkAdventureApi {
     restorePlayerControls(): void;
     displayBubble(): void;
     removeBubble(): void;
+    registerMenuCommand(commandDescriptor: string, callback: (commandDescriptor: string) => void): void
     loadSound(url : string): Sound;
 }
 
@@ -45,7 +48,7 @@ const enterStreams: Map<string, Subject<EnterLeaveEvent>> = new Map<string, Subj
 const leaveStreams: Map<string, Subject<EnterLeaveEvent>> = new Map<string, Subject<EnterLeaveEvent>>();
 const popups: Map<number, Popup> = new Map<number, Popup>();
 const popupCallbacks: Map<number, Map<number, ButtonClickedCallback>> = new Map<number, Map<number, ButtonClickedCallback>>();
-
+const menuCallbacks: Map<string, (command: string) => void> = new Map()
 let popupId = 0;
 interface ButtonDescriptor {
     /**
@@ -216,6 +219,16 @@ window.WA = {
         popups.set(popupId, popup)
         return popup;
     },
+
+    registerMenuCommand(commandDescriptor: string, callback: (commandDescriptor: string) => void) {
+        menuCallbacks.set(commandDescriptor, callback);
+        window.parent.postMessage({
+            'type': 'registerMenuCommand',
+            'data': {
+                menutItem: commandDescriptor
+            } as MenuItemRegisterEvent
+        }, '*');
+    },
     /**
      * Listen to messages sent by the local user, in the chat.
      */
@@ -268,8 +281,12 @@ window.addEventListener('message', message => {
             if (callback) {
                 callback(popup);
             }
+        } else if (payload.type == "menuItemClicked" && isMenuItemClickedEvent(payload.data)) {
+            const callback = menuCallbacks.get(payload.data.menuItem);
+            if (callback) {
+                callback(payload.data.menuItem)
+            }
         }
-
     }
 
     // ...
