@@ -8,3 +8,5 @@ maps/yarn.lock
 maps/dist/computer.js
 maps/dist/computer.js.map
 /node_modules/
+# Don't commit package-lock.json because we are using Yarn
+package-lock.json
