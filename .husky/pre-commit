@@ -1,15 +1,36 @@
 #!/bin/sh
 . "$(dirname "$0")/_/husky.sh"
 
+echo "starting processes"
 (
-cd front || exit
-yarn run precommit
+    echo "linting frontend"
+    echo "if the following script blocks your commit run the following script (sometimes multiple times if there are new changes)"
+    echo "---------------------------------------------------"
+    echo "| ./node_modules/.bin/eslint <path to file> --fix |"
+    echo "---------------------------------------------------"
+
+    cd front || exit
+    if [ ! -d "node_modules" ];then
+       yarn install
+    fi
+    echo "running precommit"
+    yarn run precommit
+    echo "response: $?"
 )
 (
-cd pusher || exit
-yarn run precommit
+    echo "linting pusher"
+    cd pusher || exit
+    if [ ! -d "node_modules" ];then
+       yarn install
+    fi
+    yarn run precommit
+
 )
 (
-cd back || exit
-yarn run precommit
+    echo "linting backend"
+    cd back || exit
+    if [ ! -d "node_modules" ];then
+       yarn install
+    fi
+    yarn run precommit
 )

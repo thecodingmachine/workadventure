@@ -6,14 +6,14 @@ Install:
 
 ```bash
 cd benchmark
-npm install
+yarn install
 ```
 
 Running the tests (on one core):
 
 ```bash
 cd benchmark
-npm run start
+yarn run start
 ```
 
 You can adapt the `socketio-load-test.yaml` file to increase/decrease load.
