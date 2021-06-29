@@ -921,6 +921,25 @@ ${escapedMessage}
             scriptedBubbleSprite.destroy();
         }));
 
+        this.iframeSubscriptionList.push(iframeListener.unregisterIFrameStream.subscribe(()=>{
+            const allProps = this.gameMap.getCurrentProperties();
+            if(allProps.get("openWebsite") == null) {
+                layoutManager.removeActionButton('openWebsite', this.userInputManager);
+            } else {
+                const openWebsiteFunction = ()=>{
+                    coWebsiteManager.loadCoWebsite(allProps.get("openWebsite") as string, this.MapUrlFile, allProps.get('openWebsiteAllowApi') as boolean | undefined, allProps.get('openWebsitePolicy') as string | undefined);
+                    layoutManager.removeActionButton('openWebsite', this.userInputManager);
+                };
+
+                let message = allProps.get(WEBSITE_MESSAGE_PROPERTIES);
+                if(message === undefined) {
+                    message = 'Press SPACE or touch here to open web site';
+                }
+                layoutManager.addActionButton('openWebsite', message.toString(),()=>{
+                    openWebsiteFunction();
+                }, this.userInputManager);
+            }
+        }));
         this.iframeSubscriptionList.push(iframeListener.showLayerStream.subscribe((layerEvent)=>{
             this.setLayerVisibility(layerEvent.name, true);
         }));
@@ -1577,6 +1596,33 @@ ${escapedMessage}
         mediaManager.showGameOverlay();
 
         mediaManager.removeTriggerCloseJitsiFrameButton('close-jisi');
+
+        const allProps = this.gameMap.getCurrentProperties();
+
+        if(allProps.get("jitsiRoom") === undefined) {
+            layoutManager.removeActionButton('jitsiRoom', this.userInputManager);
+        } else {
+            const openJitsiRoomFunction = ()=>{
+                const roomName = jitsiFactory.getRoomName(allProps.get("jitsiRoom") as string, this.instance);
+                const jitsiUrl = allProps.get("jitsiUrl") as string | undefined;
+                if(JITSI_PRIVATE_MODE && !jitsiUrl) {
+                    const adminTag = allProps.get("jitsiRoomAdminTag") as string | undefined;
+
+                    this.connection && this.connection.emitQueryJitsiJwtMessage(roomName, adminTag);
+                } else {
+                    this.startJitsi(roomName, undefined);
+                }
+                layoutManager.removeActionButton('jitsiRoom', this.userInputManager);
+            }
+
+            let message = allProps.get(JITSI_MESSAGE_PROPERTIES);
+            if(message === undefined) {
+                message = 'Press SPACE or touch here to enter Jitsi Meet room';
+            }
+            layoutManager.addActionButton('jitsiRoom', message.toString(), () => {
+                openJitsiRoomFunction();
+            }, this.userInputManager);
+        }
     }
 
     //todo: put this into an 'orchestrator' scene (EntryScene?)
