@@ -93,7 +93,7 @@ export class SelectCompanionScene extends ResizableScene {
         // next scene
         this.scene.stop(SelectCompanionSceneName);
         waScaleManager.restoreZoom();
-        gameManager.tryResumingGame(this, EnableCameraSceneName);
+        gameManager.tryResumingGame(EnableCameraSceneName);
         this.scene.remove(SelectCompanionSceneName);
         selectCompanionSceneVisibleStore.set(false);
     }

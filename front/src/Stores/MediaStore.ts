@@ -162,7 +162,7 @@ function createVideoConstraintStore() {
         }),
         setFrameRate: (frameRate: number) => update((constraints) => {
             constraints.frameRate = { ideal: frameRate };
-
+            localUserStore.setVideoQualityValue(frameRate);
             return constraints;
         })
     };

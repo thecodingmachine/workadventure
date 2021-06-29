@@ -1,4 +1,6 @@
 <script lang="typescript">
+    import MenuIcon from "./Menu/MenuIcon.svelte";
+    import {menuIconVisible, menuVisible} from "../Stores/MenuStore";
     import {enableCameraSceneVisibilityStore} from "../Stores/MediaStore";
     import CameraControls from "./CameraControls.svelte";
     import MyCamera from "./MyCamera.svelte";
@@ -21,6 +23,7 @@
     import AudioPlaying from "./UI/AudioPlaying.svelte";
     import {soundPlayingStore} from "../Stores/SoundPlayingStore";
     import ErrorDialog from "./UI/ErrorDialog.svelte";
+    import Menu from "./Menu/Menu.svelte";
     import VideoOverlay from "./Video/VideoOverlay.svelte";
     import {gameOverlayVisibilityStore} from "../Stores/GameOverlayStoreVisibility";
     import {consoleGlobalMessageManagerVisibleStore} from "../Stores/ConsoleGlobalMessageManagerStore";
@@ -62,13 +65,18 @@
     </div>
     {/if}
 
-    <!--
+
     {#if $menuIconVisible}
         <div>
-            <MenuIcon  />
+            <MenuIcon  game ={game}></MenuIcon>
         </div>
     {/if}
-    -->
+    {#if $menuVisible}
+        <div>
+            <Menu></Menu>
+        </div>
+    {/if}
+
     {#if $gameOverlayVisibilityStore}
         <div>
             <VideoOverlay></VideoOverlay>

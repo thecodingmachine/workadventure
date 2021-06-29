@@ -77,4 +77,5 @@ export abstract class DirtyScene extends ResizableScene {
     public onResize(): void {
         this.objectListChanged = true;
     }
+
 }

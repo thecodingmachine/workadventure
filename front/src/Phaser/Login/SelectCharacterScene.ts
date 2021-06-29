@@ -102,7 +102,7 @@ export class SelectCharacterScene extends AbstractCharacterScene {
         this.scene.stop(SelectCharacterSceneName);
         waScaleManager.restoreZoom();
         gameManager.setCharacterLayers([this.selectedPlayer.texture.key]);
-        gameManager.tryResumingGame(this, EnableCameraSceneName);
+        gameManager.tryResumingGame(EnableCameraSceneName);
         this.players = [];
         selectCharacterSceneVisibleStore.set(false);
         this.events.removeListener('wake');

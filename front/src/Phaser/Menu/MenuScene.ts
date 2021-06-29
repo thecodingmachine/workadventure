@@ -8,7 +8,7 @@ import {connectionManager} from "../../Connexion/ConnectionManager";
 import {GameConnexionTypes} from "../../Url/UrlManager";
 import {WarningContainer, warningContainerHtml, warningContainerKey} from "../Components/WarningContainer";
 import {worldFullWarningStream} from "../../Connexion/WorldFullWarningStream";
-import {menuIconVisible} from "../../Stores/MenuStore";
+import {menuIconVisible, menuVisible} from "../../Stores/MenuStore";
 import {videoConstraintStore} from "../../Stores/MediaStore";
 import {showReportScreenStore} from "../../Stores/ShowReportScreenStore";
 import { HtmlUtils } from '../../WebRtc/HtmlUtils';
@@ -88,7 +88,6 @@ export class MenuScene extends Phaser.Scene {
     }
 
     create() {
-        menuIconVisible.set(true);
         this.menuElement = this.add.dom(closedSideMenuX, 30).createFromCache(gameMenuKey);
         this.menuElement.setOrigin(0);
         MenuScene.revealMenusAfterInit(this.menuElement, 'gameMenu');
@@ -143,6 +142,7 @@ export class MenuScene extends Phaser.Scene {
     }
 
     public revealMenuIcon(): void {
+        return;
         //TODO fix me: add try catch because at the same time, 'this.menuButton' variable doesn't exist and there is error on 'getChildByID' function
         try {
             (this.menuButton.getChildByID('menuIcon') as HTMLElement).hidden = false;
@@ -152,8 +152,10 @@ export class MenuScene extends Phaser.Scene {
     }
 
     openSideMenu() {
+        menuVisible.set(true);
         if (this.sideMenuOpened) return;
-        this.closeAll();
+
+        /*this.closeAll();
         this.sideMenuOpened = true;
         this.menuButton.getChildByID('openMenuButton').innerHTML = 'X';
         const connection = gameManager.getCurrentGameScene(this).connection;
@@ -171,7 +173,7 @@ export class MenuScene extends Phaser.Scene {
             x: openedSideMenuX,
             duration: 500,
             ease: 'Power3'
-        });
+        });*/
     }
 
     private showWorldCapacityWarning() {
@@ -190,7 +192,8 @@ export class MenuScene extends Phaser.Scene {
     }
 
     private closeSideMenu(): void {
-        if (!this.sideMenuOpened) return;
+        menuVisible.set(false);
+       /* if (!this.sideMenuOpened) return;
         this.sideMenuOpened = false;
         this.closeAll();
         this.menuButton.getChildByID('openMenuButton').innerHTML = `<img src="/static/images/menu.svg">`;
@@ -200,7 +203,7 @@ export class MenuScene extends Phaser.Scene {
             x: closedSideMenuX,
             duration: 500,
             ease: 'Power3'
-        });
+        });*/
     }
 
     private openGameSettingsMenu(): void {
@@ -319,18 +322,18 @@ export class MenuScene extends Phaser.Scene {
         switch ((event?.target as HTMLInputElement).id) {
             case 'changeNameButton':
                 this.closeSideMenu();
-                gameManager.leaveGame(this, LoginSceneName, new LoginScene());
+                gameManager.leaveGame(LoginSceneName, new LoginScene());
                 break;
             case 'sparkButton':
                 this.gotToCreateMapPage();
                 break;
             case 'changeSkinButton':
                 this.closeSideMenu();
-                gameManager.leaveGame(this, SelectCharacterSceneName, new SelectCharacterScene());
+                gameManager.leaveGame(SelectCharacterSceneName, new SelectCharacterScene());
                 break;
             case 'changeCompanionButton':
                 this.closeSideMenu();
-                gameManager.leaveGame(this, SelectCompanionSceneName, new SelectCompanionScene());
+                gameManager.leaveGame(SelectCompanionSceneName, new SelectCompanionScene());
                 break;
             case 'closeButton':
                 this.closeSideMenu();
