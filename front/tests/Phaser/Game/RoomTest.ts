@@ -55,4 +55,17 @@ describe("Room getIdFromIdentifier()", () => {
         expect(roomId).toEqual('_/global/maps.workadventu.re/test2.json');
         expect(hash).toEqual("start");
     });
+
+
+    it("should work with an absolute map file link", () => {
+        const {roomId, hash} = Room.getIdFromIdentifier('https://another.domain/test.json', 'https://maps.workadventu.re/test.json', 'global');
+        expect(roomId).toEqual('_/global/another.domain/test.json');
+        expect(hash).toEqual('');
+    });
+
+    it("should work with an absolute map file link and a hash", () => {
+        const {roomId, hash} = Room.getIdFromIdentifier('https://another.domain/test.json#testing', 'https://maps.workadventu.re/test.json', 'global');
+        expect(roomId).toEqual('_/global/another.domain/test.json');
+        expect(hash).toEqual('testing');
+    });
 });

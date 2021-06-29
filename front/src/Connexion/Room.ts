@@ -42,8 +42,12 @@ export class Room {
             //We instead use 'workadventure' as a dummy base value.
             const baseUrlObject = new URL(baseUrl);
             const absoluteExitSceneUrl = new URL(identifier, 'http://workadventure/_/'+currentInstance+'/'+baseUrlObject.hostname+baseUrlObject.pathname);
-            roomId = absoluteExitSceneUrl.pathname; //in case of a relative url, we need to create a public roomId
-            roomId = roomId.substring(1); //remove the leading slash
+            if (absoluteExitSceneUrl.hostname !== 'workadventure') {
+              roomId = `_/${currentInstance}/${absoluteExitSceneUrl.hostname}${absoluteExitSceneUrl.pathname}`;
+            } else {
+              roomId = absoluteExitSceneUrl.pathname; //in case of a relative url, we need to create a public roomId
+              roomId = roomId.substring(1); //remove the leading slash
+            }
             hash = absoluteExitSceneUrl.hash;
             hash = hash.substring(1); //remove the leading diese
         } else { //absolute room Id
