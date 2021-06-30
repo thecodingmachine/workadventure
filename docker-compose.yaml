@@ -66,6 +66,8 @@ services:
       API_URL: back:50051
       JITSI_URL: $JITSI_URL
       JITSI_ISS: $JITSI_ISS
+      CLIENT_ID: $CLIENT_ID
+      CLIENT_SECRET: $CLIENT_SECRET
     volumes:
       - ./pusher:/usr/src/app
     labels:

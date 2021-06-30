@@ -6,15 +6,17 @@ export enum GameConnexionTypes {
     register,
     empty,
     unknown,
+    jwt,
 }
 
 //this class is responsible with analysing and editing the game's url
 class UrlManager {
 
-    //todo: use that to detect if we can find a token in localstorage
     public getGameConnexionType(): GameConnexionTypes {
         const url = window.location.pathname.toString();
-        if (url.includes('_/')) {
+        if (url === '/jwt') {
+            return GameConnexionTypes.jwt;
+        } else if (url.includes('_/')) {
             return GameConnexionTypes.anonymous;
         } else if (url.includes('@/')) {
             return GameConnexionTypes.organization;

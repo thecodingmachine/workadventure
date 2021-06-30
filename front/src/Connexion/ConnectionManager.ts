@@ -4,7 +4,7 @@ import {RoomConnection} from "./RoomConnection";
 import type {OnConnectInterface, PositionInterface, ViewportInterface} from "./ConnexionModels";
 import {GameConnexionTypes, urlManager} from "../Url/UrlManager";
 import {localUserStore} from "./LocalUserStore";
-import {CharacterTexture, LocalUser} from "./LocalUser";
+import {LocalUser} from "./LocalUser";
 import {Room} from "./Room";
 
 
@@ -14,7 +14,11 @@ class ConnectionManager {
     private connexionType?: GameConnexionTypes
     private reconnectingTimeout: NodeJS.Timeout|null = null;
     private _unloading:boolean = false;
+    private authToken: string|null = null;
 
+    get isLogged() {
+        return this.authToken !== null;
+    }
     get unloading () {
         return this._unloading;
     }
@@ -25,6 +29,19 @@ class ConnectionManager {
             if (this.reconnectingTimeout) clearTimeout(this.reconnectingTimeout)
         })
     }
+
+    public loadLoginScreen() {
+        const state = localUserStore.generateState();
+        const nonce = localUserStore.generateNonce();
+        localUserStore.setLastRoomId(window.location.pathname + window.location.search + window.location.hash);
+        window.location.assign(`http://${PUSHER_URL}/login-screen?state=${state}&nonce=${nonce}`);
+    }
+    
+    public logout() {
+        localUserStore.setAuthToken(null);
+        window.location.reload();
+    }
+    
     /**
      * Tries to login to the node server and return the starting map url to be loaded
      */
@@ -32,23 +49,49 @@ class ConnectionManager {
 
         const connexionType = urlManager.getGameConnexionType();
         this.connexionType = connexionType;
-        if(connexionType === GameConnexionTypes.register) {
-           const organizationMemberToken = urlManager.getOrganizationToken();
+        if(connexionType === GameConnexionTypes.jwt) {
+            const urlParams = new URLSearchParams(window.location.search);
+            const code = urlParams.get('code');
+            const state = urlParams.get('state');
+            if (!state || !localUserStore.verifyState(state)) {
+                throw 'Could not validate state!';
+            }
+            if (!code) {
+                throw 'No Auth code';
+            }
+            const { authToken, nonce} = await Axios.get(`${PUSHER_URL}/login-callback`, {params: {code}}).then(res => res.data);
+            if (!nonce || !localUserStore.verifyNonce(nonce)) {
+                throw 'Could not validate nonce!';
+            }
+            localUserStore.setAuthToken(authToken);
+            this.authToken = authToken;
+            let roomId = localUserStore.getLastRoomId();
+            if (!roomId) {
+                roomId = START_ROOM_URL;
+            }
+            const room = new Room(roomId);
+            urlManager.pushRoomIdToUrl(room);
+            return Promise.resolve(room);
+        } else if(connexionType === GameConnexionTypes.register) {
+            //@deprecated
+            /*const organizationMemberToken = urlManager.getOrganizationToken();
             const data = await Axios.post(`${PUSHER_URL}/register`, {organizationMemberToken}).then(res => res.data);
             this.localUser = new LocalUser(data.userUuid, data.authToken, data.textures);
             localUserStore.saveUser(this.localUser);
 
             const organizationSlug = data.organizationSlug;
             const worldSlug = data.worldSlug;
-            const roomSlug = data.roomSlug;
-
-            const room = new Room('/@/'+organizationSlug+'/'+worldSlug+'/'+roomSlug + window.location.search + window.location.hash);
+            const roomSlug = data.roomSlug;*/
+            
+            const room = new Room(START_ROOM_URL);
             urlManager.pushRoomIdToUrl(room);
             return Promise.resolve(room);
         } else if (connexionType === GameConnexionTypes.organization || connexionType === GameConnexionTypes.anonymous || connexionType === GameConnexionTypes.empty) {
 
-            let localUser = localUserStore.getLocalUser();
-            if (localUser && localUser.jwtToken && localUser.uuid && localUser.textures) {
+            //let localUser = localUserStore.getLocalUser();
+            const authToken = localUserStore.getAuthToken();
+            this.authToken = authToken;
+            /*if (localUser && localUser.jwtToken && localUser.uuid && localUser.textures) {
                 this.localUser = localUser;
                 try {
                     await this.verifyToken(localUser.jwtToken);
@@ -57,6 +100,8 @@ class ConnectionManager {
                     console.error('JWT token invalid. Did it expire? Login anonymously instead.');
                     await this.anonymousLogin();
                 }
+            }else if (authToken){
+                
             }else{
                 await this.anonymousLogin();
             }
@@ -64,7 +109,7 @@ class ConnectionManager {
             localUser = localUserStore.getLocalUser();
             if(!localUser){
                 throw "Error to store local user data";
-            }
+            }*/
 
             let roomId: string;
             if (connexionType === GameConnexionTypes.empty) {
@@ -76,7 +121,7 @@ class ConnectionManager {
             //get detail map for anonymous login and set texture in local storage
             const room = new Room(roomId);
             const mapDetail = await room.getMapDetail();
-            if(mapDetail.textures != undefined && mapDetail.textures.length > 0) {
+            /*if(mapDetail.textures != undefined && mapDetail.textures.length > 0) {
                 //check if texture was changed
                 if(localUser.textures.length === 0){
                     localUser.textures = mapDetail.textures;
@@ -91,7 +136,7 @@ class ConnectionManager {
                 }
                 this.localUser = localUser;
                 localUserStore.saveUser(localUser);
-            }
+            }*/
             return Promise.resolve(room);
         }
 
@@ -116,7 +161,7 @@ class ConnectionManager {
 
     public connectToRoomSocket(roomId: string, name: string, characterLayers: string[], position: PositionInterface, viewport: ViewportInterface, companion: string|null): Promise<OnConnectInterface> {
         return new Promise<OnConnectInterface>((resolve, reject) => {
-            const connection = new RoomConnection(this.localUser.jwtToken, roomId, name, characterLayers, position, viewport, companion);
+            const connection = new RoomConnection(this.authToken, roomId, name, characterLayers, position, viewport, companion);
             connection.onConnectError((error: object) => {
                 console.log('An error occurred while connecting to socket server. Retrying');
                 reject(error);
