@@ -34,7 +34,7 @@ export interface CharacterTexture {
 }
 
 export interface FetchMemberDataByUuidResponse {
-    uuid: string;
+    userUuid: string;
     tags: string[];
     visitCardUrl: string | null;
     textures: CharacterTexture[];
@@ -68,12 +68,12 @@ class AdminApi {
         return res.data;
     }
 
-    async fetchMemberDataByUuid(uuid: string, roomId: string): Promise<FetchMemberDataByUuidResponse> {
+    async fetchMemberDataByUuid(email: string|null, roomId: string): Promise<FetchMemberDataByUuidResponse> {
         if (!ADMIN_API_URL) {
             return Promise.reject(new Error("No admin backoffice set!"));
         }
         const res = await Axios.get(ADMIN_API_URL + "/api/room/access", {
-            params: { uuid, roomId },
+            params: { email, roomId },
             headers: { Authorization: `${ADMIN_API_TOKEN}` },
         });
         return res.data;

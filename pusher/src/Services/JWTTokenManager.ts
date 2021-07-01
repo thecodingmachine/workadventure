@@ -1,14 +1,32 @@
 import { ADMIN_API_URL, ALLOW_ARTILLERY, SECRET_KEY } from "../Enum/EnvironmentVariable";
 import { uuid } from "uuidv4";
-import Jwt from "jsonwebtoken";
+import Jwt, {verify} from "jsonwebtoken";
 import { TokenInterface } from "../Controller/AuthenticateController";
 import { adminApi, AdminBannedData } from "../Services/AdminApi";
 
+
+export interface AuthTokenData {
+    email: string,
+}
+
 class JWTTokenManager {
-    public createJWTToken(userUuid: string) {
-        return Jwt.sign({ userUuid: userUuid }, SECRET_KEY, { expiresIn: "200d" }); //todo: add a mechanic to refresh or recreate token
+    /**
+     * @deprecated
+     */
+    public createUuidJWTToken(userUuid: string) {
+        return Jwt.sign({ userUuid: userUuid }, SECRET_KEY, { expiresIn: "200d" });
+    }
+    public createAuthToken(email: string) {
+        return Jwt.sign({ email }, SECRET_KEY, { expiresIn: "200d" }); //todo: add a mechanic to refresh or recreate token
+    }
+    
+    public decodeJWTToken(token: string):AuthTokenData {
+        return Jwt.verify(token, SECRET_KEY) as AuthTokenData;
     }
 
+    /**
+     * @deprecated
+     */
     public async getUserUuidFromToken(token: unknown, ipAddress?: string, room?: string): Promise<string> {
         if (!token) {
             throw new Error("An authentication error happened, a user tried to connect without a token.");

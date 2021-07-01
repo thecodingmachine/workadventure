@@ -1,4 +1,5 @@
 import {areCharacterLayersValid, isUserNameValid, LocalUser} from "./LocalUser";
+import {v4 as uuidv4} from "uuid";
 
 const playerNameKey =           'playerName';
 const selectedPlayerKey =       'selectedPlayer';
@@ -11,6 +12,10 @@ const audioPlayerVolumeKey =    'audioVolume';
 const audioPlayerMuteKey =      'audioMute';
 const helpCameraSettingsShown = 'helpCameraSettingsShown';
 const fullscreenKey =           'fullscreen';
+const lastRoomId =           'lastRoomId';
+const authToken =           'authToken';
+const state =           'state';
+const nonce =           'nonce';
 
 class LocalUserStore {
     saveUser(localUser: LocalUser) {
@@ -107,6 +112,45 @@ class LocalUserStore {
     }
     getFullscreen(): boolean {
         return localStorage.getItem(fullscreenKey) === 'true';
+    }
+    
+    setLastRoomId(value: string) {
+        localStorage.setItem(lastRoomId, value);
+    }
+    getLastRoomId(): string|null {
+        const id = localStorage.getItem(lastRoomId);
+        localStorage.removeItem(lastRoomId);
+        return id;
+    }
+
+    setAuthToken(value: string|null) {
+        value ? localStorage.setItem(authToken, value) : localStorage.removeItem(authToken);
+    }
+    getAuthToken(): string|null {
+        return localStorage.getItem(authToken);
+    }
+
+    generateState(): string {
+        const newState = uuidv4();
+        localStorage.setItem(state, newState);
+        return newState
+    }
+
+    verifyState(value: string): boolean {
+        const oldValue = localStorage.getItem(state);
+        localStorage.removeItem(state);
+        return oldValue === value;
+    }
+    generateNonce(): string {
+        const newNonce = uuidv4();
+        localStorage.setItem(nonce, newNonce);
+        return newNonce
+    }
+
+    verifyNonce(value:string): boolean {
+        const oldValue = localStorage.getItem(nonce);
+        localStorage.removeItem(nonce);
+        return oldValue === value;
     }
 }
 
