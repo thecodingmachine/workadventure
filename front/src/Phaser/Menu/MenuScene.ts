@@ -342,7 +342,7 @@ export class MenuScene extends Phaser.Scene {
                 this.openGameSettingsMenu();
                 break;
             case 'oidcLogin':
-                connectionManager.isLogged ? connectionManager.logout() : connectionManager.loadLoginScreen();
+                connectionManager.loadLoginScreen();
                 break;
             case 'toggleFullscreen':
                 this.toggleFullscreen();

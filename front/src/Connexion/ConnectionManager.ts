@@ -31,6 +31,7 @@ class ConnectionManager {
     }
 
     public loadLoginScreen() {
+        localUserStore.setAuthToken(null);
         const state = localUserStore.generateState();
         const nonce = localUserStore.generateNonce();
         localUserStore.setLastRoomId(window.location.pathname + window.location.search + window.location.hash);
@@ -57,12 +58,10 @@ class ConnectionManager {
                 throw 'Could not validate state!';
             }
             if (!code) {
-                throw 'No Auth code';
+                throw 'No Auth code provided';
             }
-            const { authToken, nonce} = await Axios.get(`${PUSHER_URL}/login-callback`, {params: {code}}).then(res => res.data);
-            if (!nonce || !localUserStore.verifyNonce(nonce)) {
-                throw 'Could not validate nonce!';
-            }
+            const nonce = localUserStore.getNonce();
+            const { authToken } = await Axios.get(`${PUSHER_URL}/login-callback`, {params: {code, nonce}}).then(res => res.data);
             localUserStore.setAuthToken(authToken);
             this.authToken = authToken;
             let roomId = localUserStore.getLastRoomId();

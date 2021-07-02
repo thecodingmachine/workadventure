@@ -9,8 +9,11 @@ const JITSI_ISS = process.env.JITSI_ISS || "";
 const SECRET_JITSI_KEY = process.env.SECRET_JITSI_KEY || "";
 const PUSHER_HTTP_PORT = parseInt(process.env.PUSHER_HTTP_PORT || "8080") || 8080;
 export const SOCKET_IDLE_TIMER = parseInt(process.env.SOCKET_IDLE_TIMER as string) || 30; // maximum time (in second) without activity before a socket is closed
-export const CLIENT_ID='513915283499-jdfb8d28c0lklcc03r84b8sk0979j6iq.apps.googleusercontent.com'
-export const CLIENT_SECRET='S-04INn276DqITuhpsfO8G3x'
+
+export const FRONT_URL=process.env.FRONT_URL || 'http://localhost';
+export const OPID_CLIENT_ID=process.env.OPID_CLIENT_ID || '';
+export const OPID_CLIENT_SECRET=process.env.OPID_CLIENT_SECRET || '';
+export const OPID_CLIENT_ISSUER='https://accounts.google.com';
 
 
 export {

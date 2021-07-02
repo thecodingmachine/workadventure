@@ -1,5 +1,5 @@
 const DEBUG_MODE: boolean = process.env.DEBUG_MODE == "true";
-const START_ROOM_URL : string = process.env.START_ROOM_URL || '/_/global/maps.workadventure.localhost/Floor0/floor0.json';
+const START_ROOM_URL : string = process.env.START_ROOM_URL || '/_/global/maps.workadventure.localhost/Floor1/floor1.json';
 const PUSHER_URL = process.env.PUSHER_URL || '//pusher.workadventure.localhost';
 const UPLOADER_URL = process.env.UPLOADER_URL || '//uploader.workadventure.localhost';
 const STUN_SERVER: string = process.env.STUN_SERVER || "stun:stun.l.google.com:19302";

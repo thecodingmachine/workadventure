@@ -147,10 +147,10 @@ class LocalUserStore {
         return newNonce
     }
 
-    verifyNonce(value:string): boolean {
+    getNonce(): string|null {
         const oldValue = localStorage.getItem(nonce);
         localStorage.removeItem(nonce);
-        return oldValue === value;
+        return oldValue;
     }
 }
 
