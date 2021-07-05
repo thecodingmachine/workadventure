@@ -28,6 +28,7 @@ import {
     UserLeftRoomMessage,
     AdminMessage,
     BanMessage,
+    TokenExpiredMessage,
     RefreshRoomMessage,
     EmotePromptMessage,
 } from "../Messages/generated/messages_pb";
@@ -596,7 +597,19 @@ export class SocketManager implements ZoneEventListener {
         const serverToClientMessage = new ServerToClientMessage();
         serverToClientMessage.setWorldfullmessage(errorMessage);
 
-        client.send(serverToClientMessage.serializeBinary().buffer, true);
+        if (!client.disconnecting) {
+            client.send(serverToClientMessage.serializeBinary().buffer, true);
+        }
+    }
+    public emitTokenExpiredMessage(client: WebSocket) {
+        const errorMessage = new TokenExpiredMessage();
+
+        const serverToClientMessage = new ServerToClientMessage();
+        serverToClientMessage.setTokenexpiredmessage(errorMessage);
+
+        if (!client.disconnecting) {
+            client.send(serverToClientMessage.serializeBinary().buffer, true);
+        }
     }
 
     public emitConnexionErrorMessage(client: WebSocket, message: string) {

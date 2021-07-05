@@ -8,6 +8,7 @@ import { adminApi, AdminBannedData } from "../Services/AdminApi";
 export interface AuthTokenData {
     email: string,
 }
+export const tokenInvalidException = 'tokenInvalid';
 
 class JWTTokenManager {
     /**
@@ -17,11 +18,15 @@ class JWTTokenManager {
         return Jwt.sign({ userUuid: userUuid }, SECRET_KEY, { expiresIn: "200d" });
     }
     public createAuthToken(email: string) {
-        return Jwt.sign({ email }, SECRET_KEY, { expiresIn: "200d" }); //todo: add a mechanic to refresh or recreate token
+        return Jwt.sign({ email }, SECRET_KEY, { expiresIn: "3d" });
     }
     
     public decodeJWTToken(token: string):AuthTokenData {
-        return Jwt.verify(token, SECRET_KEY) as AuthTokenData;
+        try {
+            return Jwt.verify(token, SECRET_KEY, {ignoreExpiration: false}) as AuthTokenData;
+        } catch (e) {
+            throw {reason: tokenInvalidException, message: e.message}
+        }
     }
 
     /**

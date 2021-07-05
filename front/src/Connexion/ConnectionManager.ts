@@ -30,7 +30,7 @@ class ConnectionManager {
         })
     }
 
-    public loadLoginScreen() {
+    public loadOpenIDScreen() {
         localUserStore.setAuthToken(null);
         const state = localUserStore.generateState();
         const nonce = localUserStore.generateNonce();

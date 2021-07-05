@@ -21,7 +21,7 @@ import {
 import { UserMovesMessage } from "../Messages/generated/messages_pb";
 import { TemplatedApp } from "uWebSockets.js";
 import { parse } from "query-string";
-import { jwtTokenManager } from "../Services/JWTTokenManager";
+import {jwtTokenManager, tokenInvalidException} from "../Services/JWTTokenManager";
 import { adminApi, CharacterTexture, FetchMemberDataByUuidResponse } from "../Services/AdminApi";
 import { SocketManager, socketManager } from "../Services/SocketManager";
 import { emitInBatch } from "../Services/IoSocketHelpers";
@@ -292,15 +292,10 @@ export class IoSocketController {
                             context
                         );
                     } catch (e) {
-                        /*if (e instanceof Error) {
-                            console.log(e.message);
-                            res.writeStatus("401 Unauthorized").end(e.message);
-                        } else {
-                            res.writeStatus("500 Internal Server Error").end('An error occurred');
-                        }*/
-                        return res.upgrade(
+                        res.upgrade(
                             {
                                 rejected: true,
+                                reason: e.reason || null,
                                 message: e.message ? e.message : "500 Internal Server Error",
                             },
                             websocketKey,
@@ -315,12 +310,14 @@ export class IoSocketController {
             open: (ws) => {
                 if (ws.rejected === true) {
                     //FIX ME to use status code
-                    if (ws.message === "World is full") {
+                    if (ws.reason === tokenInvalidException) {
+                        socketManager.emitTokenExpiredMessage(ws);
+                    } else if (ws.message === "World is full") {
                         socketManager.emitWorldFullMessage(ws);
                     } else {
                         socketManager.emitConnexionErrorMessage(ws, ws.message as string);
                     }
-                    ws.close();
+                    setTimeout(() => ws.close(), 0);
                     return;
                 }
 
