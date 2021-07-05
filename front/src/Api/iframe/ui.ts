@@ -1,10 +1,10 @@
-import { isButtonClickedEvent } from "../Events/ButtonClickedEvent";
-import { isMenuItemClickedEvent } from "../Events/ui/MenuItemClickedEvent";
-import type { MenuItemRegisterEvent } from "../Events/ui/MenuItemRegisterEvent";
-import { IframeApiContribution, sendToWorkadventure } from "./IframeApiContribution";
-import { apiCallback } from "./registeredCallbacks";
-import type { ButtonClickedCallback, ButtonDescriptor } from "./Ui/ButtonDescriptor";
-import { Popup } from "./Ui/Popup";
+import { isButtonClickedEvent } from '../Events/ButtonClickedEvent';
+import { isMenuItemClickedEvent } from '../Events/ui/MenuItemClickedEvent';
+import { IframeApiContribution, sendToWorkadventure } from './IframeApiContribution';
+import { apiCallback } from './registeredCallbacks';
+import type { ButtonClickedCallback, ButtonDescriptor } from './Ui/ButtonDescriptor';
+import { Popup } from './Ui/Popup';
+import { TriggerMessage } from './Ui/TriggerMessage';
 
 let popupId = 0;
 const popups: Map<number, Popup> = new Map<number, Popup>();
@@ -26,7 +26,7 @@ interface ZonedPopupOptions {
 export class WorkAdventureUiCommands extends IframeApiContribution<WorkAdventureUiCommands> {
     callbacks = [
         apiCallback({
-            type: "buttonClickedEvent",
+            type: 'buttonClickedEvent',
             typeChecker: isButtonClickedEvent,
             callback: (payloadData) => {
                 const callback = popupCallbacks.get(payloadData.popupId)?.get(payloadData.buttonId);
@@ -40,7 +40,7 @@ export class WorkAdventureUiCommands extends IframeApiContribution<WorkAdventure
             },
         }),
         apiCallback({
-            type: "menuItemClicked",
+            type: 'menuItemClicked',
             typeChecker: isMenuItemClickedEvent,
             callback: (event) => {
                 const callback = menuCallbacks.get(event.menuItem);
@@ -68,7 +68,7 @@ export class WorkAdventureUiCommands extends IframeApiContribution<WorkAdventure
         }
 
         sendToWorkadventure({
-            type: "openPopup",
+            type: 'openPopup',
             data: {
                 popupId,
                 targetObject,
@@ -89,7 +89,7 @@ export class WorkAdventureUiCommands extends IframeApiContribution<WorkAdventure
     registerMenuCommand(commandDescriptor: string, callback: (commandDescriptor: string) => void) {
         menuCallbacks.set(commandDescriptor, callback);
         sendToWorkadventure({
-            type: "registerMenuCommand",
+            type: 'registerMenuCommand',
             data: {
                 menutItem: commandDescriptor,
             },
@@ -97,11 +97,15 @@ export class WorkAdventureUiCommands extends IframeApiContribution<WorkAdventure
     }
 
     displayBubble(): void {
-        sendToWorkadventure({ type: "displayBubble", data: null });
+        sendToWorkadventure({ type: 'displayBubble', data: null });
     }
 
     removeBubble(): void {
-        sendToWorkadventure({ type: "removeBubble", data: null });
+        sendToWorkadventure({ type: 'removeBubble', data: null });
+    }
+
+    triggerMessage(message: string, callback: () => void): TriggerMessage {
+        return new TriggerMessage(message, callback);
     }
 }
 

@@ -25,8 +25,11 @@
     ],
     "rules": {
         "no-unused-vars": "off",
+        "quotes": [
+            "warn",
+            "single"
+        ],
         "@typescript-eslint/no-explicit-any": "error",
-
         // TODO: remove those ignored rules and write a stronger code!
         "@typescript-eslint/no-floating-promises": "off",
         "@typescript-eslint/no-unsafe-call": "off",

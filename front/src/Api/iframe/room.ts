@@ -4,7 +4,7 @@ import { isDataLayerEvent } from "../Events/DataLayerEvent";
 import { EnterLeaveEvent, isEnterLeaveEvent } from "../Events/EnterLeaveEvent";
 import { isGameStateEvent } from "../Events/GameStateEvent";
 
-import {IframeApiContribution, queryWorkadventure, sendToWorkadventure} from "./IframeApiContribution";
+import { IframeApiContribution, queryWorkadventure, sendToWorkadventure } from "./IframeApiContribution";
 import { apiCallback } from "./registeredCallbacks";
 
 import type { ITiledMap } from "../../Phaser/Map/ITiledMap";

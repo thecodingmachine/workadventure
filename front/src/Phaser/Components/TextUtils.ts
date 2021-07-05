@@ -1,5 +1,5 @@
-import type {ITiledMapObject} from "../Map/ITiledMap";
-import type {GameScene} from "../Game/GameScene";
+import type { ITiledMapObject } from '../Map/ITiledMap';
+import type { GameScene } from '../Game/GameScene';
 
 export class TextUtils {
     public static createTextFromITiledMapObject(scene: GameScene, object: ITiledMapObject): void {
@@ -7,15 +7,15 @@ export class TextUtils {
             throw new Error('This object has not textual representation.');
         }
         const options: {
-            fontStyle?: string,
-            fontSize?: string,
-            fontFamily?: string,
-            color?: string,
-            align?: string,
+            fontStyle?: string;
+            fontSize?: string;
+            fontFamily?: string;
+            color?: string;
+            align?: string;
             wordWrap?: {
-                width: number,
-                useAdvancedWrap?: boolean
-            }
+                width: number;
+                useAdvancedWrap?: boolean;
+            };
         } = {};
         if (object.text.italic) {
             options.fontStyle = 'italic';
@@ -27,7 +27,7 @@ export class TextUtils {
         }
         options.fontSize = fontSize + 'px';
         if (object.text.fontfamily) {
-            options.fontFamily = '"'+object.text.fontfamily+'"';
+            options.fontFamily = '"' + object.text.fontfamily + '"';
         }
         let color = '#000000';
         if (object.text.color !== undefined) {
@@ -38,7 +38,7 @@ export class TextUtils {
             options.wordWrap = {
                 width: object.width,
                 //useAdvancedWrap: true
-            }
+            };
         }
         if (object.text.halign !== undefined) {
             options.align = object.text.halign;
