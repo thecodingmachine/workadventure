@@ -1,7 +1,7 @@
-import type { ITiledMap, ITiledMapLayer, ITiledMapLayerProperty } from "../Map/ITiledMap";
-import { flattenGroupLayersMap } from "../Map/LayersFlattener";
+import type { ITiledMap, ITiledMapLayer, ITiledMapLayerProperty } from '../Map/ITiledMap';
+import { flattenGroupLayersMap } from '../Map/LayersFlattener';
 import TilemapLayer = Phaser.Tilemaps.TilemapLayer;
-import { DEPTH_OVERLAY_INDEX } from "./DepthIndexes";
+import { DEPTH_OVERLAY_INDEX } from './DepthIndexes';
 
 export type PropertyChangeCallback = (
     newValue: string | number | boolean | undefined,
@@ -35,10 +35,17 @@ export class GameMap {
         this.flatLayers = flattenGroupLayersMap(map);
         let depth = -2;
         for (const layer of this.flatLayers) {
-            if (layer.type === "tilelayer") {
-                this.phaserLayers.push(phaserMap.createLayer(layer.name, terrains, 0, 0).setDepth(depth));
+            if (layer.type === 'tilelayer') {
+                this.phaserLayers.push(
+                    phaserMap
+                        .createLayer(layer.name, terrains, (layer.x || 0) * 32, (layer.y || 0) * 32)
+                        .setDepth(depth)
+                        .setAlpha(layer.opacity)
+                        .setVisible(layer.visible)
+                        .setSize(layer.width, layer.height)
+                );
             }
-            if (layer.type === "objectgroup" && layer.name === "floorLayer") {
+            if (layer.type === 'objectgroup' && layer.name === 'floorLayer') {
                 depth = DEPTH_OVERLAY_INDEX;
             }
         }
@@ -47,12 +54,12 @@ export class GameMap {
                 if (tile.properties) {
                     this.tileSetPropertyMap[tileset.firstgid + tile.id] = tile.properties;
                     tile.properties.forEach((prop) => {
-                        if (prop.name == "name" && typeof prop.value == "string") {
+                        if (prop.name == 'name' && typeof prop.value == 'string') {
                             this.tileNameMap.set(prop.value, tileset.firstgid + tile.id);
                         }
-                        if (prop.name == "exitUrl" && typeof prop.value == "string") {
+                        if (prop.name == 'exitUrl' && typeof prop.value == 'string') {
                             this.exitUrls.push(prop.value);
-                        } else if (prop.name == "start") {
+                        } else if (prop.name == 'start') {
                             this.hasStartTile = true;
                         }
                     });
@@ -110,7 +117,7 @@ export class GameMap {
         const properties = new Map<string, string | boolean | number>();
 
         for (const layer of this.flatLayers) {
-            if (layer.type !== "tilelayer") {
+            if (layer.type !== 'tilelayer') {
                 continue;
             }
 
@@ -201,12 +208,12 @@ export class GameMap {
             console.error("The layer that you want to change doesn't exist.");
             return;
         }
-        if (fLayer.type !== "tilelayer") {
-            console.error("The layer that you want to change is not a tilelayer. Tile can only be put in tilelayer.");
+        if (fLayer.type !== 'tilelayer') {
+            console.error('The layer that you want to change is not a tilelayer. Tile can only be put in tilelayer.');
             return;
         }
-        if (typeof fLayer.data === "string") {
-            console.error("Data of the layer that you want to change is only readable.");
+        if (typeof fLayer.data === 'string') {
+            console.error('Data of the layer that you want to change is only readable.');
             return;
         }
         fLayer.data[x + y * fLayer.height] = index;
@@ -220,7 +227,7 @@ export class GameMap {
                 this.putTileInFlatLayer(tileIndex, x, y, layer);
                 const phaserTile = phaserLayer.putTileAt(tileIndex, x, y);
                 for (const property of this.getTileProperty(tileIndex)) {
-                    if (property.name === "collides" && property.value === "true") {
+                    if (property.name === 'collides' && property.value === 'true') {
                         phaserTile.setCollision(true);
                     }
                 }
@@ -228,12 +235,12 @@ export class GameMap {
                 console.error("The tile that you want to place doesn't exist.");
             }
         } else {
-            console.error("The layer that you want to change is not a tilelayer. Tile can only be put in tilelayer.");
+            console.error('The layer that you want to change is not a tilelayer. Tile can only be put in tilelayer.');
         }
     }
 
     private getIndexForTileType(tile: string | number): number | undefined {
-        if (typeof tile == "number") {
+        if (typeof tile == 'number') {
             return tile;
         }
         return this.tileNameMap.get(tile);
