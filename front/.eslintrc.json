@@ -21,12 +21,14 @@
         "project": "./tsconfig.json"
     },
     "plugins": [
-        "@typescript-eslint"
+        "@typescript-eslint",
+        "unused-imports"
     ],
     "rules": {
         "no-unused-vars": "off",
+        "unused-imports/no-unused-imports": "warn",
+        "@typescript-eslint/consistent-type-imports": "warn",
         "@typescript-eslint/no-explicit-any": "error",
-
         // TODO: remove those ignored rules and write a stronger code!
         "@typescript-eslint/no-floating-promises": "off",
         "@typescript-eslint/no-unsafe-call": "off",
