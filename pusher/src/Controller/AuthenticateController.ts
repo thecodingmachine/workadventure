@@ -21,20 +21,20 @@ export class AuthenticateController extends BaseController {
     }
 
     openIDLogin() {
-        this.App.get('/login-screen', async (res: HttpResponse, req: HttpRequest) => {
+        this.App.get("/login-screen", async (res: HttpResponse, req: HttpRequest) => {
             res.onAborted(() => {
                 console.warn("/message request was aborted");
             });
 
             const { nonce, state } = parse(req.getQuery());
             if (!state || !nonce) {
-                res.writeStatus("400 Unauthorized").end('missing state and nonce URL parameters');
+                res.writeStatus("400 Unauthorized").end("missing state and nonce URL parameters");
                 return;
             }
             try {
                 const loginUri = await openIDClient.authorizationUrl(state as string, nonce as string);
-                res.writeStatus('302');
-                res.writeHeader('Location',loginUri);
+                res.writeStatus("302");
+                res.writeHeader("Location", loginUri);
                 return res.end();
             } catch (e) {
                 return this.errorToResponse(e, res);
@@ -43,20 +43,21 @@ export class AuthenticateController extends BaseController {
     }
 
     openIDCallback() {
-        this.App.get('/login-callback', async (res: HttpResponse, req: HttpRequest) => {
+        this.App.get("/login-callback", async (res: HttpResponse, req: HttpRequest) => {
             res.onAborted(() => {
                 console.warn("/message request was aborted");
             });
             const { code, nonce } = parse(req.getQuery());
             try {
                 const userInfo = await openIDClient.getUserInfo(code as string, nonce as string);
-                if (!userInfo.email) {
-                    throw new Error('No email in the response');
+                const email = userInfo.email || userInfo.sub;
+                if (!email) {
+                    throw new Error("No email in the response");
                 }
-                const authToken = jwtTokenManager.createAuthToken(userInfo.email);
-                res.writeStatus('200');
+                const authToken = jwtTokenManager.createAuthToken(email);
+                res.writeStatus("200");
                 this.addCorsHeaders(res);
-                return res.end(JSON.stringify({authToken}));
+                return res.end(JSON.stringify({ authToken }));
             } catch (e) {
                 return this.errorToResponse(e, res);
             }

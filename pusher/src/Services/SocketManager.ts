@@ -115,7 +115,7 @@ export class SocketManager implements ZoneEventListener {
                 console.warn("Admin connection lost to back server");
                 // Let's close the front connection if the back connection is closed. This way, we can retry connecting from the start.
                 if (!client.disconnecting) {
-                    this.closeWebsocketConnection(client, 1011, "Connection lost to back server");
+                    this.closeWebsocketConnection(client, 1011, "Admin Connection lost to back server");
                 }
                 console.log("A user left");
             })

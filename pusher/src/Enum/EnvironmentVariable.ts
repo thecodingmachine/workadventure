@@ -10,11 +10,14 @@ const SECRET_JITSI_KEY = process.env.SECRET_JITSI_KEY || "";
 const PUSHER_HTTP_PORT = parseInt(process.env.PUSHER_HTTP_PORT || "8080") || 8080;
 export const SOCKET_IDLE_TIMER = parseInt(process.env.SOCKET_IDLE_TIMER as string) || 30; // maximum time (in second) without activity before a socket is closed
 
-export const FRONT_URL=process.env.FRONT_URL || 'http://localhost';
-export const OPID_CLIENT_ID=process.env.OPID_CLIENT_ID || '';
+export const FRONT_URL = process.env.FRONT_URL || "http://localhost";
+/*export const OPID_CLIENT_ID=process.env.OPID_CLIENT_ID || '';
 export const OPID_CLIENT_SECRET=process.env.OPID_CLIENT_SECRET || '';
 export const OPID_CLIENT_ISSUER='https://accounts.google.com';
-
+*/
+export const OPID_CLIENT_ID = "auth-code-client";
+export const OPID_CLIENT_SECRET = "secret";
+export const OPID_CLIENT_ISSUER = "http://hydra.workadventure.localhost:4444/";
 
 export {
     SECRET_KEY,
