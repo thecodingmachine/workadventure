@@ -1,0 +1,24 @@
+//InputTextGlobalMessage
+section.section-input-send-text {
+  height: 100%;
+
+  .ql-toolbar{
+    max-height: 100px;
+
+    background: whitesmoke;
+  }
+
+  div.input-send-text{
+    height: auto;
+    max-height: calc(100% - 100px);
+    overflow: auto;
+
+    color: whitesmoke;
+    font-size: 1rem;
+
+    .ql-editor.ql-blank::before {
+      color: whitesmoke;
+      font-size: 1rem;
+    }
+  }
+}

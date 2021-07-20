@@ -1,7 +1,7 @@
-import {SKIP_RENDER_OPTIMIZATIONS} from "../../Enum/EnvironmentVariable";
-import {coWebsiteManager} from "../../WebRtc/CoWebsiteManager";
-import {waScaleManager} from "../Services/WaScaleManager";
-import {ResizableScene} from "../Login/ResizableScene";
+import { SKIP_RENDER_OPTIMIZATIONS } from "../../Enum/EnvironmentVariable";
+import { coWebsiteManager } from "../../WebRtc/CoWebsiteManager";
+import { waScaleManager } from "../Services/WaScaleManager";
+import { ResizableScene } from "../Login/ResizableScene";
 
 const Events = Phaser.Core.Events;
 
@@ -14,9 +14,7 @@ const Events = Phaser.Core.Events;
  * It also automatically calls "onResize" on any scenes extending ResizableScene.
  */
 export class Game extends Phaser.Game {
-
     private _isDirty = false;
-
 
     constructor(GameConfig: Phaser.Types.Core.GameConfig) {
         super(GameConfig);
@@ -27,7 +25,7 @@ export class Game extends Phaser.Game {
                     scene.onResize();
                 }
             }
-        })
+        });
 
         /*window.addEventListener('resize', (event) => {
             // Let's trigger the onResize method of any active scene that is a ResizableScene
@@ -39,11 +37,9 @@ export class Game extends Phaser.Game {
         });*/
     }
 
-    public step(time: number, delta: number)
-    {
+    public step(time: number, delta: number) {
         // @ts-ignore
-        if (this.pendingDestroy)
-        {
+        if (this.pendingDestroy) {
             // @ts-ignore
             return this.runDestroy();
         }
@@ -100,15 +96,17 @@ export class Game extends Phaser.Game {
         }
 
         //  Loop through the scenes in forward order
-        for (let i = 0; i < this.scene.scenes.length; i++)
-        {
+        for (let i = 0; i < this.scene.scenes.length; i++) {
             const scene = this.scene.scenes[i];
             const sys = scene.sys;
 
-            if (sys.settings.visible && sys.settings.status >= Phaser.Scenes.LOADING && sys.settings.status < Phaser.Scenes.SLEEPING)
-            {
+            if (
+                sys.settings.visible &&
+                sys.settings.status >= Phaser.Scenes.LOADING &&
+                sys.settings.status < Phaser.Scenes.SLEEPING
+            ) {
                 // @ts-ignore
-                if(typeof scene.isDirty === 'function') {
+                if (typeof scene.isDirty === "function") {
                     // @ts-ignore
                     const isDirty = scene.isDirty() || scene.tweens.getAllTweens().length > 0;
                     if (isDirty) {
@@ -128,5 +126,12 @@ export class Game extends Phaser.Game {
      */
     public markDirty(): void {
         this._isDirty = true;
+    }
+
+    /**
+     * Return the first scene found in the game
+     */
+    public findAnyScene(): Phaser.Scene {
+        return this.scene.getScenes()[0];
     }
 }

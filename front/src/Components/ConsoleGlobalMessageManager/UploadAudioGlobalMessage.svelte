@@ -1,12 +1,11 @@
 <script lang="ts">
-    import {HtmlUtils} from "../../WebRtc/HtmlUtils";
-    import type {Game} from "../../Phaser/Game/Game";
-    import type {GameManager} from "../../Phaser/Game/GameManager";
-    import {consoleGlobalMessageManagerFocusStore, consoleGlobalMessageManagerVisibleStore} from "../../Stores/ConsoleGlobalMessageManagerStore";
-    import {AdminMessageEventTypes} from "../../Connexion/AdminMessagesService";
-    import type {PlayGlobalMessageInterface} from "../../Connexion/ConnexionModels";
+    import { HtmlUtils } from "../../WebRtc/HtmlUtils";
+    import type { Game } from "../../Phaser/Game/Game";
+    import type { GameManager } from "../../Phaser/Game/GameManager";
+    import { consoleGlobalMessageManagerFocusStore, consoleGlobalMessageManagerVisibleStore } from "../../Stores/ConsoleGlobalMessageManagerStore";
+    import { AdminMessageEventTypes } from "../../Connexion/AdminMessagesService";
+    import type { PlayGlobalMessageInterface } from "../../Connexion/ConnexionModels";
     import uploadFile from "../images/music-file.svg";
-    import {LoginSceneName} from "../../Phaser/Login/LoginScene";
 
     interface EventTargetFiles extends EventTarget {
         files: Array<File>;
@@ -15,38 +14,39 @@
     export let game: Game;
     export let gameManager: GameManager;
 
-    let gameScene = gameManager.getCurrentGameScene(game.scene.getScene(LoginSceneName));
-    let fileinput: HTMLInputElement;
-    let filename: string;
-    let filesize: string;
-    let errorfile: boolean;
+    let gameScene = gameManager.getCurrentGameScene(game.findAnyScene());
+    let fileInput: HTMLInputElement;
+    let fileName: string;
+    let fileSize: string;
+    let errorFile: boolean;
 
     const AUDIO_TYPE = AdminMessageEventTypes.audio;
 
+    export const handleSending = {
+        async sendAudioMessage() {
+            if (gameScene == undefined) {
+                return;
+            }
+            const inputAudio = HtmlUtils.getElementByIdOrFail<HTMLInputElement>("input-send-audio");
+            const selectedFile = inputAudio.files ? inputAudio.files[0] : null;
+            if (!selectedFile) {
+                errorFile = true;
+                throw 'no file selected';
+            }
 
-    async function SendAudioMessage() {
-        if (gameScene == undefined) {
-            return;
-        }
-        const inputAudio = HtmlUtils.getElementByIdOrFail<HTMLInputElement>("input-send-audio");
-        const selectedFile = inputAudio.files ? inputAudio.files[0] : null;
-        if (!selectedFile) {
-            errorfile = true;
-            throw 'no file selected';
-        }
+            const fd = new FormData();
+            fd.append('file', selectedFile);
+            const res = await gameScene.connection?.uploadAudio(fd);
 
-        const fd = new FormData();
-        fd.append('file', selectedFile);
-        const res = await gameScene.connection?.uploadAudio(fd);
-
-        const GlobalMessage: PlayGlobalMessageInterface = {
-            id: (res as { id: string }).id,
-            message: (res as { path: string }).path,
-            type: AUDIO_TYPE
+            const GlobalMessage: PlayGlobalMessageInterface = {
+                id: (res as { id: string }).id,
+                message: (res as { path: string }).path,
+                type: AUDIO_TYPE
+            }
+            inputAudio.value = '';
+            gameScene.connection?.emitGlobalMessage(GlobalMessage);
+            disableConsole();
         }
-        inputAudio.value = '';
-        gameScene.connection?.emitGlobalMessage(GlobalMessage);
-        disableConsole();
     }
 
     function inputAudioFile(event: Event) {
@@ -60,9 +60,9 @@
             return;
         }
 
-        filename = file.name;
-        filesize = getFileSize(file.size);
-        errorfile = false;
+        fileName = file.name;
+        fileSize = getFileSize(file.size);
+        errorFile = false;
     }
 
     function getFileSize(number: number) {
@@ -85,46 +85,46 @@
 
 
 <section class="section-input-send-audio">
-    <div class="input-send-audio">
-        <img src="{uploadFile}" alt="Upload a file" on:click|preventDefault={ () => {fileinput.click();}}>
-        {#if filename != undefined}
-            <label for="input-send-audio">{filename} : {filesize}</label>
-        {/if}
-        {#if errorfile}
-            <p class="err">No file selected. You need to upload a file before sending it.</p>
-        {/if}
-        <input type="file" id="input-send-audio" bind:this={fileinput} on:change={(e) => {inputAudioFile(e)}}>
-    </div>
-    <div class="btn-action">
-        <button class="nes-btn is-primary" on:click|preventDefault={SendAudioMessage}>Send</button>
-    </div>
+    <img class="nes-pointer" src="{uploadFile}" alt="Upload a file" on:click|preventDefault={ () => {fileInput.click();}}>
+    {#if fileName !== undefined}
+        <p>{fileName} : {fileSize}</p>
+    {/if}
+    {#if errorFile}
+        <p class="err">No file selected. You need to upload a file before sending it.</p>
+    {/if}
+    <input type="file" id="input-send-audio" bind:this={fileInput} on:change={(e) => {inputAudioFile(e)}}>
 </section>
 
 <style lang="scss">
-  //UploadAudioGlobalMessage
-  .section-input-send-audio {
-    margin: 10px;
-  }
+  section.section-input-send-audio {
+    display: flex;
+    flex-direction: column;
 
-  .section-input-send-audio .input-send-audio {
+    height: 100%;
     text-align: center;
-  }
 
-  .section-input-send-audio #input-send-audio{
-    display: none;
-  }
+    img {
+      flex: 1 1 auto;
 
-  .section-input-send-audio div.input-send-audio label{
-    color: white;
-  }
+      max-height: 80%;
+      margin-bottom: 20px;
+    }
 
-  .section-input-send-audio div.input-send-audio p.err {
-    color: #ce372b;
-    text-align: center;
-  }
+    p {
+      flex: 1 1 auto;
 
-  .section-input-send-audio div.input-send-audio img{
-    height: 150px;
-    cursor: url('../../../style/images/cursor_pointer.png'), pointer;
+      margin-bottom: 5px;
+
+      color: whitesmoke;
+      font-size: 1rem;
+
+      &.err {
+        color: #ce372b;
+      }
+    }
+
+    input {
+      display: none;
+    }
   }
 </style>
