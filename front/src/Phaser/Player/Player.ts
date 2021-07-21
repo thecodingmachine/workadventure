@@ -1,9 +1,9 @@
-import {PlayerAnimationDirections} from "./Animation";
-import type {GameScene} from "../Game/GameScene";
-import {UserInputEvent, UserInputManager} from "../UserInput/UserInputManager";
-import {Character} from "../Entity/Character";
-import {userMovingStore} from "../../Stores/GameStore";
-import {RadialMenu, RadialMenuClickEvent, RadialMenuItem} from "../Components/RadialMenu";
+import { PlayerAnimationDirections } from "./Animation";
+import type { GameScene } from "../Game/GameScene";
+import { UserInputEvent, UserInputManager } from "../UserInput/UserInputManager";
+import { Character } from "../Entity/Character";
+import { userMovingStore } from "../../Stores/GameStore";
+import { EmoteMenu, EmoteMenuClickEvent } from "../Components/EmoteMenu";
 
 export const hasMovedEventName = "hasMoved";
 export const requestEmoteEventName = "requestEmote";
@@ -11,7 +11,7 @@ export const requestEmoteEventName = "requestEmote";
 export class Player extends Character {
     private previousDirection: string = PlayerAnimationDirections.Down;
     private wasMoving: boolean = false;
-    private emoteMenu: RadialMenu|null = null;
+    private emoteMenu: EmoteMenu | null = null;
     private updateListener: () => void;
 
     constructor(
@@ -23,7 +23,7 @@ export class Player extends Character {
         direction: PlayerAnimationDirections,
         moving: boolean,
         private userInputManager: UserInputManager,
-        companion: string|null,
+        companion: string | null,
         companionTexturePromise?: Promise<string>
     ) {
         super(Scene, x, y, texturesPromise, name, direction, moving, 1, true, companion, companionTexturePromise);
@@ -37,7 +37,7 @@ export class Player extends Character {
                 this.emoteMenu.y = this.y;
             }
         };
-        this.scene.events.addListener('postupdate', this.updateListener);
+        this.scene.events.addListener("postupdate", this.updateListener);
     }
 
     moveUser(delta: number): void {
@@ -73,14 +73,14 @@ export class Player extends Character {
 
         if (x !== 0 || y !== 0) {
             this.move(x, y);
-            this.emit(hasMovedEventName, {moving, direction, x: this.x, y: this.y});
+            this.emit(hasMovedEventName, { moving, direction, x: this.x, y: this.y });
         } else if (this.wasMoving && moving) {
             // slow joystick movement
             this.move(0, 0);
-            this.emit(hasMovedEventName, {moving, direction: this.previousDirection, x: this.x, y: this.y});
+            this.emit(hasMovedEventName, { moving, direction: this.previousDirection, x: this.x, y: this.y });
         } else if (this.wasMoving && !moving) {
             this.stop();
-            this.emit(hasMovedEventName, {moving, direction: this.previousDirection, x: this.x, y: this.y});
+            this.emit(hasMovedEventName, { moving, direction: this.previousDirection, x: this.x, y: this.y });
         }
 
         if (direction !== null) {
@@ -94,32 +94,36 @@ export class Player extends Character {
         return this.wasMoving;
     }
 
-    openOrCloseEmoteMenu(emotes:RadialMenuItem[]) {
-        if(this.emoteMenu) {
+    openOrCloseEmoteMenu() {
+        if (!this.emoteMenu) {
+            this.emoteMenu = new EmoteMenu(this.scene, this.x, this.y, this.userInputManager);
+        }
+
+        if (this.emoteMenu.isOpen()) {
             this.closeEmoteMenu();
         } else {
-            this.openEmoteMenu(emotes);
+            this.openEmoteMenu();
         }
     }
 
-    openEmoteMenu(emotes:RadialMenuItem[]): void {
+    openEmoteMenu(): void {
         this.cancelPreviousEmote();
-        this.emoteMenu = new RadialMenu(this.scene, this.x, this.y, emotes)
-        this.emoteMenu.on(RadialMenuClickEvent, (item: RadialMenuItem) => {
+        if (!this.emoteMenu) return;
+        this.emoteMenu.openPicker();
+        this.emoteMenu.on(EmoteMenuClickEvent, (emote: string) => {
             this.closeEmoteMenu();
-            this.emit(requestEmoteEventName, item.name);
-            this.playEmote(item.name);
+            this.emit(requestEmoteEventName, emote);
+            this.playEmote(emote);
         });
     }
 
     closeEmoteMenu(): void {
         if (!this.emoteMenu) return;
-        this.emoteMenu.destroy();
-        this.emoteMenu = null;
+        this.emoteMenu.closePicker();
     }
 
     destroy() {
-        this.scene.events.removeListener('postupdate', this.updateListener);
+        this.scene.events.removeListener("postupdate", this.updateListener);
         super.destroy();
     }
 }

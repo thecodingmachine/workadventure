@@ -39,6 +39,7 @@
   },
   "dependencies": {
     "@fontsource/press-start-2p": "^4.3.0",
+    "@joeattardi/emoji-button": "^4.6.0",
     "@types/simple-peer": "^9.11.1",
     "@types/socket.io-client": "^1.4.32",
     "axios": "^0.21.1",

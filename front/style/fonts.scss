@@ -1,5 +1,14 @@
 @import "~@fontsource/press-start-2p/index.css";
 
+@font-face {
+  font-family: "Twemoji Mozilla";
+  src: url("./fonts/TwemojiMozilla.ttf") format('truetype');
+}
+
+*{
+  font-family: PixelFont-7,monospace;
+}
+
 .nes-btn {
   font-family: "Press Start 2P";
 }

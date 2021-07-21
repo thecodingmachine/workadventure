@@ -2,7 +2,7 @@ import {Subject} from "rxjs";
 
 interface EmoteEvent {
     userId: number,
-    emoteName: string,
+    emote: string,
 }
 
 class EmoteEventStream {
@@ -11,8 +11,8 @@ class EmoteEventStream {
     public stream = this._stream.asObservable();
 
 
-    fire(userId: number, emoteName:string) {
-        this._stream.next({userId, emoteName});
+    fire(userId: number, emote:string) {
+        this._stream.next({userId, emote});
     }
 }
 
