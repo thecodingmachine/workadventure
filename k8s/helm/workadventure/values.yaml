@@ -1,0 +1,279 @@
+# Default values for workadventure.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+image:
+  tag: ""
+
+domain: "workadventure.minikube"
+
+# Env
+env:
+  secretKey: "tempSecretKeyNeedsToChange"
+  adminApiToken: "123"
+  jitsiIss: ""
+  jitsiUrl: "meet.jit.si"
+  secretJitsiKey: ""
+  jitsiPrivateMode: false
+  debugMode: false
+
+#################### workadventure-back ####################
+back:
+  name: "back"
+  replicaCount: 2
+
+  image:
+    repository: "thecodingmachine/workadventure-back"
+    pullPolicy: IfNotPresent
+
+  # Env back
+  env: {}    
+
+  extraEnvs: 
+    - name: KEY
+      value: value
+
+  autoscaling:
+    enabled: true
+    minReplicas: 1
+    maxReplicas: 100
+    targetCPUUtilizationPercentage: 80
+    targetMemoryUtilizationPercentage: 80
+
+  service:
+    type: ClusterIP
+    port: 80
+
+  ingress:
+    enabled: true
+    annotations: {}
+      # kubernetes.io/ingress.class: nginx
+      # kubernetes.io/tls-acme: "true"
+    hosts:
+      - host: api
+        paths: [/]
+    tls: []
+    #  - secretName: chart-example-tls
+    #    hosts:
+    #      - chart-example.local
+#################### workadventure-back ####################
+
+#################### workadventure-front ####################
+front:
+  name: "front"
+  replicaCount: 1
+
+  image:
+    repository: "thecodingmachine/workadventure-front"
+    pullPolicy: IfNotPresent
+
+  # Env front
+  env:
+    turnServer: "turn:coturn.workadventu.re:443,turns:coturn.workadventu.re:443"
+    turnUser: "workadventure"
+    turnPassword: "WorkAdventure123"
+    startRoomUniverse: "global"
+    startRoomPath: "/Floor0/floor0.json"
+
+  extraEnvs: 
+    - name: KEY
+      value: value
+
+  autoscaling:
+    enabled: true
+    minReplicas: 1
+    maxReplicas: 100
+    targetCPUUtilizationPercentage: 80
+    targetMemoryUtilizationPercentage: 80
+
+  service:
+    type: ClusterIP
+    port: 80
+
+  ingress:
+    enabled: true
+    annotations:
+      # kubernetes.io/ingress.class: nginx
+      # kubernetes.io/tls-acme: "true"
+    hosts:
+      - host: play
+        paths: [/]
+    tls: []
+    #  - secretName: chart-example-tls
+    #    hosts:
+    #      - chart-example.local  
+#################### workadventure-front ####################
+
+
+#################### workadventure-pusher ####################
+pusher:
+  name: "pusher"
+  replicaCount: 2
+
+  image:
+    repository: "thecodingmachine/workadventure-pusher"
+    pullPolicy: IfNotPresent
+
+  # Env front
+  env: {}
+
+  extraEnvs: 
+    - name: KEY
+      value: value
+
+  autoscaling:
+    enabled: true
+    minReplicas: 1
+    maxReplicas: 100
+    targetCPUUtilizationPercentage: 80
+    targetMemoryUtilizationPercentage: 80
+
+  service:
+    type: ClusterIP
+    port: 80
+
+  ingress:
+    enabled: true
+    annotations:
+      # kubernetes.io/ingress.class: nginx
+      # kubernetes.io/tls-acme: "true"
+    hosts:
+      - host: pusher
+        paths: [/]
+    tls: []
+    #  - secretName: chart-example-tls
+    #    hosts:
+    #      - chart-example.local  
+#################### workadventure-pusher ####################
+
+
+#################### workadventure-uploader ####################
+uploader:
+  name: "uploader"
+  replicaCount: 2
+
+  image:
+    repository: "thecodingmachine/workadventure-uploader"
+    pullPolicy: IfNotPresent
+
+  # Env front
+  env: {}
+
+  extraEnvs: 
+    - name: KEY
+      value: value
+
+  autoscaling:
+    enabled: true
+    minReplicas: 1
+    maxReplicas: 100
+    targetCPUUtilizationPercentage: 80
+    targetMemoryUtilizationPercentage: 80
+
+  service:
+    type: ClusterIP
+    port: 80
+
+  ingress:
+    enabled: true
+    annotations:
+      # kubernetes.io/ingress.class: nginx
+      # kubernetes.io/tls-acme: "true"
+    hosts:
+      - host: uploader
+        paths: [/]
+    tls: []
+    #  - secretName: chart-example-tls
+    #    hosts:
+    #      - chart-example.local  
+#################### workadventure-uploader ####################
+
+
+#################### workadventure-maps ####################
+maps:
+  name: "maps"
+  replicaCount: 2
+
+  image:
+    repository: "thecodingmachine/workadventure-maps"
+    pullPolicy: IfNotPresent
+
+  # Env front
+  env: {}
+
+  extraEnvs: 
+    - name: KEY
+      value: value
+
+  autoscaling:
+    enabled: true
+    minReplicas: 1
+    maxReplicas: 100
+    targetCPUUtilizationPercentage: 80
+    targetMemoryUtilizationPercentage: 80
+
+  service:
+    type: ClusterIP
+    port: 80
+
+  ingress:
+    enabled: true
+    annotations:
+      # kubernetes.io/ingress.class: nginx
+      # kubernetes.io/tls-acme: "true"
+    hosts:
+      - host: maps
+        paths: [/]
+    tls: []
+    #  - secretName: chart-example-tls
+    #    hosts:
+    #      - chart-example.local  
+#################### workadventure-maps ####################
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}

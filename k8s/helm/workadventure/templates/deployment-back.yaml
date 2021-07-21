@@ -1,0 +1,82 @@
+{{- $name := include "workadventure.back.name" . -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "workadventure.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.back.autoscaling.enabled }}
+  replicas: {{ .Values.back.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "workadventure.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/type: "{{ .Values.back.name }}"
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "workadventure.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/type: "{{ .Values.back.name }}"
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "workadventure.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.back.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.back.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+            - name: direct
+              containerPort: 50051
+              protocol: TCP
+          # livenessProbe:
+          #   httpGet:
+          #     path: /
+          #     port: http
+          # readinessProbe:
+          #   httpGet:
+          #     path: /
+          #     port: http
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          env:
+            - name: 'DEBUG'
+              value: "*"
+            - name: 'SECRET_KEY'
+              value: "{{- .Values.env.secretKey -}}"
+            - name: 'ADMIN_API_TOKEN'
+              value: "{{- .Values.env.adminApiToken -}}"
+            - name: 'JITSI_ISS'
+              value: "{{- .Values.env.jitsiIss -}}"
+            - name: 'JITSI_URL'
+              value: "{{- .Values.env.jitsiUrl -}}"
+            - name: 'SECRET_JITSI_KEY'
+              value: "{{- .Values.env.secretJitsiKey -}}"
+              #TODO : ADMIN_API_URL
+            {{ toYaml .Values.back.extraEnvs | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

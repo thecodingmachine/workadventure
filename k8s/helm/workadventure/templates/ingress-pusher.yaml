@@ -1,0 +1,47 @@
+{{- if .Values.pusher.ingress.enabled -}}
+{{- $svcPort := .Values.pusher.service.port -}}
+{{- $name := include "workadventure.pusher.name" . -}}
+{{- if semverCompare ">=1.19-0" .Capabilities.KubeVersion.GitVersion -}}
+apiVersion: networking.k8s.io/v1
+{{- else if semverCompare ">=1.14-0" .Capabilities.KubeVersion.GitVersion -}}
+apiVersion: networking.k8s.io/v1beta1
+{{- else -}}
+apiVersion: extensions/v1beta1
+{{- end }}
+kind: Ingress
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "workadventure.labels" . | nindent 4 }}
+  {{- with .Values.pusher.ingress.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if .Values.pusher.ingress.tls }}
+  tls:
+    {{- range .Values.pusher.ingress.tls }}
+    - hosts:
+        {{- range .hosts }}
+        - {{ . | quote }}
+        {{- end }}
+      secretName: {{ .secretName }}
+    {{- end }}
+  {{- end }}
+  rules:
+    {{- range .Values.pusher.ingress.hosts }}
+    {{ $fqdn := printf "%s.%s" .host $.Values.domain -}}
+    - host: {{ $fqdn }}
+      http:
+        paths:
+        {{- range .paths }}
+          - path: {{ . | quote}}
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ $name }}
+                port:
+                  number: {{ $svcPort }}
+          {{- end }}
+      {{- end }}
+{{- end }}

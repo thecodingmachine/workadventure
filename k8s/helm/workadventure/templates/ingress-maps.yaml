@@ -1,0 +1,47 @@
+{{- if .Values.maps.ingress.enabled -}}
+{{- $svcPort := .Values.maps.service.port -}}
+{{- $name := include "workadventure.maps.name" . -}}
+{{- if semverCompare ">=1.19-0" .Capabilities.KubeVersion.GitVersion -}}
+apiVersion: networking.k8s.io/v1
+{{- else if semverCompare ">=1.14-0" .Capabilities.KubeVersion.GitVersion -}}
+apiVersion: networking.k8s.io/v1beta1
+{{- else -}}
+apiVersion: extensions/v1beta1
+{{- end }}
+kind: Ingress
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "workadventure.labels" . | nindent 4 }}
+  {{- with .Values.maps.ingress.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if .Values.maps.ingress.tls }}
+  tls:
+    {{- range .Values.maps.ingress.tls }}
+    - hosts:
+        {{- range .hosts }}
+        - {{ . | quote }}
+        {{- end }}
+      secretName: {{ .secretName }}
+    {{- end }}
+  {{- end }}
+  rules:
+    {{- range .Values.maps.ingress.hosts }}
+    {{ $fqdn := printf "%s.%s" .host $.Values.domain -}}
+    - host: {{ $fqdn }}
+      http:
+        paths:
+        {{- range .paths }}
+          - path: {{ . | quote}}
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ $name }}
+                port:
+                  number: {{ $svcPort }}
+          {{- end }}
+      {{- end }}
+{{- end }}

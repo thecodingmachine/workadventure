@@ -1,0 +1,29 @@
+{{- if .Values.front.autoscaling.enabled }}
+{{- $name := include "workadventure.front.name" . -}}
+apiVersion: autoscaling/v2beta1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "workadventure.labels" . | nindent 4 }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ $name }}
+  minReplicas: {{ .Values.front.autoscaling.minReplicas }}
+  maxReplicas: {{ .Values.front.autoscaling.maxReplicas }}
+  metrics:
+    {{- if .Values.front.autoscaling.targetCPUUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: cpu
+        targetAverageUtilization: {{ .Values.front.autoscaling.targetCPUUtilizationPercentage }}
+    {{- end }}
+    {{- if .Values.front.autoscaling.targetMemoryUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: memory
+        targetAverageUtilization: {{ .Values.front.autoscaling.targetMemoryUtilizationPercentage }}
+    {{- end }}
+{{- end }}

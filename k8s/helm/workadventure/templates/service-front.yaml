@@ -1,0 +1,17 @@
+{{- $name := include "workadventure.front.name" . -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "workadventure.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.front.service.type }}
+  ports:
+    - port: {{ .Values.front.service.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "workadventure.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/type: "{{ .Values.front.name }}"

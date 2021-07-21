@@ -1,0 +1,89 @@
+{{- $fullName := include "workadventure.fullname" . -}}
+{{- $name := printf "%s-%s" $fullName "front" | quote -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "workadventure.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.front.autoscaling.enabled }}
+  replicas: {{ .Values.front.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "workadventure.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/type: "{{ .Values.front.name }}"
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "workadventure.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/type: "{{ .Values.front.name }}"
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "workadventure.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.front.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.front.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+          # livenessProbe:
+          #   httpGet:
+          #     path: /
+          #     port: http
+          # readinessProbe:
+          #   httpGet:
+          #     path: /
+          #     port: http
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          env:
+            - name: 'DEBUG_MODE'
+              value: "{{- .Values.env.debugMode -}}"
+            - name: 'API_URL'
+              value: {{ include "workadventure.pusherUrl" . }}
+            - name: 'UPLOADER_URL'
+              value: {{ include "workadventure.uploaderUrl" . }}
+            - name: 'ADMIN_URL'
+              value: "{{- .Values.domain -}}"
+            - name: 'JITSI_URL'
+              value: "{{- .Values.env.jitsiUrl -}}"
+            - name: 'SECRET_JITSI_KEY'
+              value: "{{- .Values.env.secretJitsiKey -}}"
+            - name: 'JITSI_PRIVATE_MODE'
+              value: "{{- .Values.env.jitsiPrivateMode -}}"
+            - name: 'TURN_SERVER'
+              value: "{{- .Values.front.env.turnServer -}}"
+            - name: 'TURN_USER'
+              value: "{{- .Values.front.env.turnUser -}}"
+            - name: 'TURN_PASSWORD'
+              value: "{{- .Values.front.env.turnPassword -}}"
+            - name: "START_ROOM_URL"
+              value: {{ include "workadventure.startRoomUrl" . }}
+            {{ toYaml .Values.front.extraEnvs | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
