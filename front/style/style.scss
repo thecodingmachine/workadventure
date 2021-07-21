@@ -428,6 +428,19 @@ body {
     visibility: hidden;
     display: none;
 }
+#audioplayer_volume_icon_playing.low #audioplayer_volume_icon_playing_high {
+    visibility: hidden;
+    display: none;
+}
+#audioplayer_volume_icon_playing.low #audioplayer_volume_icon_playing_mid {
+    visibility: hidden;
+    display: none;
+}
+#audioplayer_volume_icon_playing.mid #audioplayer_volume_icon_playing_high {
+    visibility: hidden;
+    display: none;
+}
+
 #audioplayerctrl > #audioplayer_volume {
     width: 100%;
     background-color: rgba(0,0,0,0.5);

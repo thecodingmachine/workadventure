@@ -11,7 +11,7 @@ enum audioStates {
 const audioPlayerDivId = "audioplayer";
 const audioPlayerCtrlId = "audioplayerctrl";
 const audioPlayerVolId = "audioplayer_volume";
-const audioPlayerMuteId = "audioplayer_volume_icon_playing";
+const audioPlayerVolumeIconId = "audioplayer_volume_icon_playing";
 const animationTime = 500;
 
 class AudioManager {
@@ -21,7 +21,7 @@ class AudioManager {
     private audioPlayerCtrl: HTMLDivElement;
     private audioPlayerElem: HTMLAudioElement | undefined;
     private audioPlayerVol: HTMLInputElement;
-    private audioPlayerMute: HTMLInputElement;
+    private audioPlayerVolumeIcon: HTMLInputElement;
 
     private volume = 1;
     private muted = false;
@@ -32,14 +32,14 @@ class AudioManager {
         this.audioPlayerDiv = HtmlUtils.getElementByIdOrFail<HTMLDivElement>(audioPlayerDivId);
         this.audioPlayerCtrl = HtmlUtils.getElementByIdOrFail<HTMLDivElement>(audioPlayerCtrlId);
         this.audioPlayerVol = HtmlUtils.getElementByIdOrFail<HTMLInputElement>(audioPlayerVolId);
-        this.audioPlayerMute = HtmlUtils.getElementByIdOrFail<HTMLInputElement>(audioPlayerMuteId);
+        this.audioPlayerVolumeIcon = HtmlUtils.getElementByIdOrFail<HTMLInputElement>(audioPlayerVolumeIconId);
 
         this.volume = localUserStore.getAudioPlayerVolume();
         this.audioPlayerVol.value = '' + this.volume;
 
         this.muted = localUserStore.getAudioPlayerMuted();
         if (this.muted) {
-            this.audioPlayerMute.classList.add('muted');
+            this.audioPlayerVolumeIcon.classList.add('muted');
         }
     }
 
@@ -93,7 +93,23 @@ class AudioManager {
         this.volumeReduced = reduceVolume;
 
         this.audioPlayerElem.volume = this.volume;
-        this.audioPlayerVol.value = '' + this.volume;
+        if (this.muted) {
+            this.audioPlayerVolumeIcon.classList.add('muted');
+            this.audioPlayerVol.value = '0';
+        } else {
+            this.audioPlayerVol.value = '' + this.volume;
+            this.audioPlayerVolumeIcon.classList.remove('muted');
+            if (this.volume < 0.3) {
+                this.audioPlayerVolumeIcon.classList.add('low');
+            } else if (this.volume < 0.7) {
+                this.audioPlayerVolumeIcon.classList.remove('low');
+                this.audioPlayerVolumeIcon.classList.add('mid');
+            } else {
+                this.audioPlayerVolumeIcon.classList.remove('low');
+                this.audioPlayerVolumeIcon.classList.remove('mid');
+            }
+        }
+
         this.audioPlayerElem.muted = this.muted;
     }
 
@@ -129,16 +145,12 @@ class AudioManager {
             this.muted = !this.muted;
             this.changeVolume();
             localUserStore.setAudioPlayerMuted(this.muted);
-
-            if (this.muted) {
-                this.audioPlayerMute.classList.add('muted');
-            } else {
-                this.audioPlayerMute.classList.remove('muted');
-            }
         }
 
         this.audioPlayerVol.oninput = (ev: Event)=> {
             this.setVolume(parseFloat((<HTMLInputElement>ev.currentTarget).value));
+            this.muted = false;        
+            localUserStore.setAudioPlayerMuted(this.muted);
             this.changeVolume();
 
             (<HTMLInputElement>ev.currentTarget).blur();
