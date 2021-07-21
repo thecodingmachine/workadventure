@@ -1,4 +1,4 @@
-import type { ITiledMap, ITiledMapLayer, ITiledMapLayerProperty } from "../Map/ITiledMap";
+import type { ITiledMap, ITiledMapLayer, ITiledMapProperty } from "../Map/ITiledMap";
 import { flattenGroupLayersMap } from "../Map/LayersFlattener";
 import TilemapLayer = Phaser.Tilemaps.TilemapLayer;
 import { DEPTH_OVERLAY_INDEX } from "./DepthIndexes";
@@ -19,7 +19,7 @@ export class GameMap {
     private callbacks = new Map<string, Array<PropertyChangeCallback>>();
     private tileNameMap = new Map<string, number>();
 
-    private tileSetPropertyMap: { [tile_index: number]: Array<ITiledMapLayerProperty> } = {};
+    private tileSetPropertyMap: { [tile_index: number]: Array<ITiledMapProperty> } = {};
     public readonly flatLayers: ITiledMapLayer[];
     public readonly phaserLayers: TilemapLayer[] = [];
 
@@ -61,7 +61,7 @@ export class GameMap {
         }
     }
 
-    public getPropertiesForIndex(index: number): Array<ITiledMapLayerProperty> {
+    public getPropertiesForIndex(index: number): Array<ITiledMapProperty> {
         if (this.tileSetPropertyMap[index]) {
             return this.tileSetPropertyMap[index];
         }
@@ -151,7 +151,7 @@ export class GameMap {
         return this.map;
     }
 
-    private getTileProperty(index: number): Array<ITiledMapLayerProperty> {
+    private getTileProperty(index: number): Array<ITiledMapProperty> {
         if (this.tileSetPropertyMap[index]) {
             return this.tileSetPropertyMap[index];
         }

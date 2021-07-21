@@ -22,6 +22,7 @@
          "JITSI_URL": env.JITSI_URL,
          "SECRET_JITSI_KEY": env.SECRET_JITSI_KEY,
          "TURN_STATIC_AUTH_SECRET": env.TURN_STATIC_AUTH_SECRET,
+         "REDIS_HOST": "redis",
        } + (if adminUrl != null then {
          "ADMIN_API_URL": adminUrl,
        } else {})
@@ -40,6 +41,7 @@
               "JITSI_URL": env.JITSI_URL,
               "SECRET_JITSI_KEY": env.SECRET_JITSI_KEY,
               "TURN_STATIC_AUTH_SECRET": env.TURN_STATIC_AUTH_SECRET,
+              "REDIS_HOST": "redis",
             } + (if adminUrl != null then {
               "ADMIN_API_URL": adminUrl,
             } else {})
@@ -97,6 +99,9 @@
       },
       "ports": [80]
     },
+    "redis": {
+      "image": "redis:6",
+    }
   },
   "config": {
     k8sextension(k8sConf)::

@@ -5,35 +5,63 @@ import { PositionInterface } from "_Model/PositionInterface";
 import { EmoteCallback, EntersCallback, LeavesCallback, MovesCallback } from "_Model/Zone";
 import { PositionNotifier } from "./PositionNotifier";
 import { Movable } from "_Model/Movable";
-import { EmoteEventMessage, JoinRoomMessage } from "../Messages/generated/messages_pb";
+import {
+    BatchToPusherMessage,
+    BatchToPusherRoomMessage,
+    EmoteEventMessage,
+    ErrorMessage,
+    JoinRoomMessage,
+    SubToPusherRoomMessage,
+    VariableMessage,
+    VariableWithTagMessage,
+} from "../Messages/generated/messages_pb";
 import { ProtobufUtils } from "../Model/Websocket/ProtobufUtils";
-import { ZoneSocket } from "src/RoomManager";
+import { RoomSocket, ZoneSocket } from "src/RoomManager";
 import { Admin } from "../Model/Admin";
+import { adminApi } from "../Services/AdminApi";
+import { isMapDetailsData, MapDetailsData } from "../Services/AdminApi/MapDetailsData";
+import { ITiledMap } from "@workadventure/tiled-map-type-guard/dist";
+import { mapFetcher } from "../Services/MapFetcher";
+import { VariablesManager } from "../Services/VariablesManager";
+import { ADMIN_API_URL } from "../Enum/EnvironmentVariable";
+import { LocalUrlError } from "../Services/LocalUrlError";
+import { emitErrorOnRoomSocket } from "../Services/MessageHelpers";
 
 export type ConnectCallback = (user: User, group: Group) => void;
 export type DisconnectCallback = (user: User, group: Group) => void;
 
 export class GameRoom {
-    private readonly minDistance: number;
-    private readonly groupRadius: number;
-
     // Users, sorted by ID
-    private readonly users: Map<number, User>;
-    private readonly usersByUuid: Map<string, User>;
-    private readonly groups: Set<Group>;
-    private readonly admins: Set<Admin>;
+    private readonly users = new Map<number, User>();
+    private readonly usersByUuid = new Map<string, User>();
+    private readonly groups = new Set<Group>();
+    private readonly admins = new Set<Admin>();
 
-    private readonly connectCallback: ConnectCallback;
-    private readonly disconnectCallback: DisconnectCallback;
-
-    private itemsState: Map<number, unknown> = new Map<number, unknown>();
+    private itemsState = new Map<number, unknown>();
 
     private readonly positionNotifier: PositionNotifier;
-    public readonly roomUrl: string;
     private versionNumber: number = 1;
     private nextUserId: number = 1;
 
-    constructor(
+    private roomListeners: Set<RoomSocket> = new Set<RoomSocket>();
+
+    private constructor(
+        public readonly roomUrl: string,
+        private mapUrl: string,
+        private readonly connectCallback: ConnectCallback,
+        private readonly disconnectCallback: DisconnectCallback,
+        private readonly minDistance: number,
+        private readonly groupRadius: number,
+        onEnters: EntersCallback,
+        onMoves: MovesCallback,
+        onLeaves: LeavesCallback,
+        onEmote: EmoteCallback
+    ) {
+        // A zone is 10 sprites wide.
+        this.positionNotifier = new PositionNotifier(320, 320, onEnters, onMoves, onLeaves, onEmote);
+    }
+
+    public static async create(
         roomUrl: string,
         connectCallback: ConnectCallback,
         disconnectCallback: DisconnectCallback,
@@ -43,19 +71,23 @@ export class GameRoom {
         onMoves: MovesCallback,
         onLeaves: LeavesCallback,
         onEmote: EmoteCallback
-    ) {
-        this.roomUrl = roomUrl;
+    ): Promise<GameRoom> {
+        const mapDetails = await GameRoom.getMapDetails(roomUrl);
 
-        this.users = new Map<number, User>();
-        this.usersByUuid = new Map<string, User>();
-        this.admins = new Set<Admin>();
-        this.groups = new Set<Group>();
-        this.connectCallback = connectCallback;
-        this.disconnectCallback = disconnectCallback;
-        this.minDistance = minDistance;
-        this.groupRadius = groupRadius;
-        // A zone is 10 sprites wide.
-        this.positionNotifier = new PositionNotifier(320, 320, onEnters, onMoves, onLeaves, onEmote);
+        const gameRoom = new GameRoom(
+            roomUrl,
+            mapDetails.mapUrl,
+            connectCallback,
+            disconnectCallback,
+            minDistance,
+            groupRadius,
+            onEnters,
+            onMoves,
+            onLeaves,
+            onEmote
+        );
+
+        return gameRoom;
     }
 
     public getGroups(): Group[] {
@@ -289,6 +321,32 @@ export class GameRoom {
         return this.itemsState;
     }
 
+    public async setVariable(name: string, value: string, user: User): Promise<void> {
+        // First, let's check if "user" is allowed to modify the variable.
+        const variableManager = await this.getVariableManager();
+
+        const readableBy = variableManager.setVariable(name, value, user);
+
+        // TODO: should we batch those every 100ms?
+        const variableMessage = new VariableWithTagMessage();
+        variableMessage.setName(name);
+        variableMessage.setValue(value);
+        if (readableBy) {
+            variableMessage.setReadableby(readableBy);
+        }
+
+        const subMessage = new SubToPusherRoomMessage();
+        subMessage.setVariablemessage(variableMessage);
+
+        const batchMessage = new BatchToPusherRoomMessage();
+        batchMessage.addPayload(subMessage);
+
+        // Dispatch the message on the room listeners
+        for (const socket of this.roomListeners) {
+            socket.write(batchMessage);
+        }
+    }
+
     public addZoneListener(call: ZoneSocket, x: number, y: number): Set<Movable> {
         return this.positionNotifier.addZoneListener(call, x, y);
     }
@@ -317,5 +375,99 @@ export class GameRoom {
 
     public emitEmoteEvent(user: User, emoteEventMessage: EmoteEventMessage) {
         this.positionNotifier.emitEmoteEvent(user, emoteEventMessage);
+    }
+
+    public addRoomListener(socket: RoomSocket) {
+        this.roomListeners.add(socket);
+    }
+
+    public removeRoomListener(socket: RoomSocket) {
+        this.roomListeners.delete(socket);
+    }
+
+    /**
+     * Connects to the admin server to fetch map details.
+     * If there is no admin server, the map details are generated by analysing the map URL (that must be in the form: /_/instance/map_url)
+     */
+    private static async getMapDetails(roomUrl: string): Promise<MapDetailsData> {
+        if (!ADMIN_API_URL) {
+            const roomUrlObj = new URL(roomUrl);
+
+            const match = /\/_\/[^/]+\/(.+)/.exec(roomUrlObj.pathname);
+            if (!match) {
+                console.error("Unexpected room URL", roomUrl);
+                throw new Error('Unexpected room URL "' + roomUrl + '"');
+            }
+
+            const mapUrl = roomUrlObj.protocol + "//" + match[1];
+
+            return {
+                mapUrl,
+                policy_type: 1,
+                textures: [],
+                tags: [],
+            };
+        }
+
+        const result = await adminApi.fetchMapDetails(roomUrl);
+        if (!isMapDetailsData(result)) {
+            console.error("Unexpected room details received from server", result);
+            throw new Error("Unexpected room details received from server");
+        }
+        return result;
+    }
+
+    private mapPromise: Promise<ITiledMap> | undefined;
+
+    /**
+     * Returns a promise to the map file.
+     * @throws LocalUrlError if the map we are trying to load is hosted on a local network
+     * @throws Error
+     */
+    private getMap(): Promise<ITiledMap> {
+        if (!this.mapPromise) {
+            this.mapPromise = mapFetcher.fetchMap(this.mapUrl);
+        }
+
+        return this.mapPromise;
+    }
+
+    private variableManagerPromise: Promise<VariablesManager> | undefined;
+
+    private getVariableManager(): Promise<VariablesManager> {
+        if (!this.variableManagerPromise) {
+            this.variableManagerPromise = this.getMap()
+                .then((map) => {
+                    const variablesManager = new VariablesManager(this.roomUrl, map);
+                    return variablesManager.init();
+                })
+                .catch((e) => {
+                    if (e instanceof LocalUrlError) {
+                        // If we are trying to load a local URL, we are probably in test mode.
+                        // In this case, let's bypass the server-side checks completely.
+
+                        // Note: we run this message inside a setTimeout so that the room listeners can have time to connect.
+                        setTimeout(() => {
+                            for (const roomListener of this.roomListeners) {
+                                emitErrorOnRoomSocket(
+                                    roomListener,
+                                    "You are loading a local map. If you use the scripting API in this map, please be aware that server-side checks and variable persistence is disabled."
+                                );
+                            }
+                        }, 1000);
+
+                        const variablesManager = new VariablesManager(this.roomUrl, null);
+                        return variablesManager.init();
+                    } else {
+                        throw e;
+                    }
+                });
+        }
+        return this.variableManagerPromise;
+    }
+
+    public async getVariablesForTags(tags: string[]): Promise<Map<string, string>> {
+        const variablesManager = await this.getVariableManager();
+        return variablesManager.getVariablesForTags(tags);
     }
 }

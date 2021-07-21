@@ -37,7 +37,7 @@ function createJoinRoomMessage(uuid: string, x: number, y: number): JoinRoomMess
 const emote: EmoteCallback = (emoteEventMessage, listener): void => {}
 
 describe("GameRoom", () => {
-    it("should connect user1 and user2", () => {
+    it("should connect user1 and user2", async () => {
         let connectCalledNumber: number = 0;
         const connect: ConnectCallback = (user: User, group: Group): void => {
             connectCalledNumber++;
@@ -47,8 +47,7 @@ describe("GameRoom", () => {
         }
 
 
-        const world = new GameRoom('_/global/test.json', connect, disconnect, 160, 160, () => {}, () => {}, () => {}, emote);
-
+        const world = await GameRoom.create('https://play.workadventu.re/_/global/localhost/test.json', connect, disconnect, 160, 160, () => {}, () => {}, () => {}, emote);
 
 
         const user1 = world.join(createMockUserSocket(), createJoinRoomMessage('1', 100, 100));
@@ -67,7 +66,7 @@ describe("GameRoom", () => {
         expect(connectCalledNumber).toBe(2);
     });
 
-    it("should connect 3 users", () => {
+    it("should connect 3 users", async () => {
         let connectCalled: boolean = false;
         const connect: ConnectCallback = (user: User, group: Group): void => {
             connectCalled = true;
@@ -76,7 +75,7 @@ describe("GameRoom", () => {
 
         }
 
-        const world = new GameRoom('_/global/test.json', connect, disconnect, 160, 160, () => {}, () => {}, () => {}, emote);
+        const world = await GameRoom.create('https://play.workadventu.re/_/global/localhost/test.json', connect, disconnect, 160, 160, () => {}, () => {}, () => {}, emote);
 
         const user1 = world.join(createMockUserSocket(), createJoinRoomMessage('1', 100, 100));
 
@@ -95,7 +94,7 @@ describe("GameRoom", () => {
         expect(connectCalled).toBe(true);
     });
 
-    it("should disconnect user1 and user2", () => {
+    it("should disconnect user1 and user2", async () => {
         let connectCalled: boolean = false;
         let disconnectCallNumber: number = 0;
         const connect: ConnectCallback = (user: User, group: Group): void => {
@@ -105,7 +104,7 @@ describe("GameRoom", () => {
             disconnectCallNumber++;
         }
 
-        const world = new GameRoom('_/global/test.json', connect, disconnect, 160, 160, () => {}, () => {}, () => {}, emote);
+        const world = await GameRoom.create('https://play.workadventu.re/_/global/localhost/test.json', connect, disconnect, 160, 160, () => {}, () => {}, () => {}, emote);
 
         const user1 = world.join(createMockUserSocket(), createJoinRoomMessage('1', 100, 100));
 

@@ -115,6 +115,8 @@ services:
       JITSI_ISS: $JITSI_ISS
       TURN_STATIC_AUTH_SECRET: SomeStaticAuthSecret
       MAX_PER_GROUP: "MAX_PER_GROUP"
+      REDIS_HOST: redis
+      NODE_ENV: development
     volumes:
       - ./back:/usr/src/app
     labels:
@@ -156,6 +158,20 @@ services:
       - ./back:/usr/src/back
       - ./front:/usr/src/front
       - ./pusher:/usr/src/pusher
+
+  redis:
+    image: redis:6
+
+  redisinsight:
+    image: redislabs/redisinsight:latest
+    labels:
+      - "traefik.http.routers.redisinsight.rule=Host(`redis.workadventure.localhost`)"
+      - "traefik.http.routers.redisinsight.entryPoints=web"
+      - "traefik.http.services.redisinsight.loadbalancer.server.port=8001"
+      - "traefik.http.routers.redisinsight-ssl.rule=Host(`redis.workadventure.localhost`)"
+      - "traefik.http.routers.redisinsight-ssl.entryPoints=websecure"
+      - "traefik.http.routers.redisinsight-ssl.tls=true"
+      - "traefik.http.routers.redisinsight-ssl.service=redisinsight"
 
 #  coturn:
 #    image: coturn/coturn:4.5.2

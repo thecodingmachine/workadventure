@@ -32,6 +32,7 @@ import {
     EmotePromptMessage,
     SendUserMessage,
     BanUserMessage,
+    VariableMessage, ErrorMessage,
 } from "../Messages/generated/messages_pb";
 
 import type { UserSimplePeerInterface } from "../WebRtc/SimplePeer";
@@ -164,6 +165,12 @@ export class RoomConnection implements RoomConnection {
                     } else if (subMessage.hasEmoteeventmessage()) {
                         const emoteMessage = subMessage.getEmoteeventmessage() as EmoteEventMessage;
                         emoteEventStream.fire(emoteMessage.getActoruserid(), emoteMessage.getEmote());
+                    } else if (subMessage.hasErrormessage()) {
+                        const errorMessage = subMessage.getErrormessage() as ErrorMessage;
+                        console.error('An error occurred server side: '+errorMessage.getMessage());
+                    } else if (subMessage.hasVariablemessage()) {
+                        event = EventMessage.SET_VARIABLE;
+                        payload = subMessage.getVariablemessage();
                     } else {
                         throw new Error("Unexpected batch message type");
                     }
@@ -180,6 +187,15 @@ export class RoomConnection implements RoomConnection {
                     items[item.getItemid()] = JSON.parse(item.getStatejson());
                 }
 
+                const variables = new Map<string, unknown>();
+                for (const variable of roomJoinedMessage.getVariableList()) {
+                    try {
+                        variables.set(variable.getName(), JSON.parse(variable.getValue()));
+                    } catch (e) {
+                        console.error('Unable to unserialize value received from server for variable "'+variable.getName()+'". Value received: "'+variable.getValue()+'". Error: ', e);
+                    }
+                }
+
                 this.userId = roomJoinedMessage.getCurrentuserid();
                 this.tags = roomJoinedMessage.getTagList();
 
@@ -187,6 +203,7 @@ export class RoomConnection implements RoomConnection {
                     connection: this,
                     room: {
                         items,
+                        variables,
                     } as RoomJoinedMessageInterface,
                 });
             } else if (message.hasWorldfullmessage()) {
@@ -536,6 +553,17 @@ export class RoomConnection implements RoomConnection {
         this.socket.send(clientToServerMessage.serializeBinary().buffer);
     }
 
+    emitSetVariableEvent(name: string, value: unknown): void {
+        const variableMessage = new VariableMessage();
+        variableMessage.setName(name);
+        variableMessage.setValue(JSON.stringify(value));
+
+        const clientToServerMessage = new ClientToServerMessage();
+        clientToServerMessage.setVariablemessage(variableMessage);
+
+        this.socket.send(clientToServerMessage.serializeBinary().buffer);
+    }
+
     onActionableEvent(callback: (message: ItemEventMessageInterface) => void): void {
         this.onMessage(EventMessage.ITEM_EVENT, (message: ItemEventMessage) => {
             callback({
@@ -619,6 +647,22 @@ export class RoomConnection implements RoomConnection {
     public onStartJitsiRoom(callback: (jwt: string, room: string) => void): void {
         this.onMessage(EventMessage.START_JITSI_ROOM, (message: SendJitsiJwtMessage) => {
             callback(message.getJwt(), message.getJitsiroom());
+        });
+    }
+
+    public onSetVariable(callback: (name: string, value: unknown) => void): void {
+        this.onMessage(EventMessage.SET_VARIABLE, (message: VariableMessage) => {
+            const name = message.getName();
+            const serializedValue = message.getValue();
+            let value: unknown = undefined;
+            if (serializedValue) {
+                try {
+                    value = JSON.parse(serializedValue);
+                } catch (e) {
+                    console.error('Unable to unserialize value received from server for variable "'+name+'". Value received: "'+serializedValue+'". Error: ', e);
+                }
+            }
+            callback(name, value);
         });
     }
 

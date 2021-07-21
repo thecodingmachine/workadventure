@@ -8,14 +8,24 @@
 - Migrated the admin console to Svelte, and redesigned the console #1211
 - Layer properties (like `exitUrl`, `silent`, etc...) can now also used in tile properties #1210 (@jonnytest1)
 - New scripting API features :
+  - Use `WA.onInit(): Promise<void>` to wait for scripting API initialization
   - Use `WA.room.showLayer(): void` to show a layer
   - Use `WA.room.hideLayer(): void` to hide a layer
   - Use `WA.room.setProperty() : void` to add, delete or change existing property of a layer
   - Use `WA.player.onPlayerMove(): void` to track the movement of the current player
-  - Use `WA.player.getCurrentUser(): Promise<User>` to get the ID, name and tags of the current player
-  - Use `WA.room.getCurrentRoom(): Promise<Room>` to get the ID, JSON map file, url of the map of the current room and the layer where the current player started
-  - Use `WA.ui.registerMenuCommand(): void` to add a custom menu
+  - Use `WA.player.id: string|undefined` to get the ID of the current player
+  - Use `WA.player.name: string` to get the name of the current player
+  - Use `WA.player.tags: string[]` to get the tags of the current player
+  - Use `WA.room.id: string` to get the ID of the room
+  - Use `WA.room.mapURL: string` to get the URL of the map
+  - Use `WA.room.mapURL: string` to get the URL of the map
+  - Use `WA.room.getMap(): Promise<ITiledMap>` to get the JSON map file
   - Use `WA.room.setTiles(): void` to add, delete or change an array of tiles
+  - Use `WA.ui.registerMenuCommand(): void` to add a custom menu
+  - Use `WA.state.loadVariable(key: string): unknown` to retrieve a variable
+  - Use `WA.state.saveVariable(key: string, value: unknown): Promise<void>` to set a variable (across the room, for all users)
+  - Use `WA.state.onVariableChange(key: string): Observable<unknown>` to track a variable
+  - Use `WA.state.[any variable]: unknown` to access directly any variable (this is a shortcut to using `WA.state.loadVariable` and `WA.state.saveVariable`)
 - Users blocking now relies on UUID rather than ID. A blocked user that leaves a room and comes back will stay blocked.
 - The text chat was redesigned to be prettier and to use more features :
   - The chat is now persistent bewteen discussions and always accesible

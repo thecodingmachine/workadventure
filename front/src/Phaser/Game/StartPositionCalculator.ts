@@ -1,5 +1,5 @@
 import type { PositionInterface } from "../../Connexion/ConnexionModels";
-import type { ITiledMap, ITiledMapLayer, ITiledMapLayerProperty, ITiledMapTileLayer } from "../Map/ITiledMap";
+import type { ITiledMap, ITiledMapLayer, ITiledMapProperty, ITiledMapTileLayer } from "../Map/ITiledMap";
 import type { GameMap } from "./GameMap";
 
 const defaultStartLayerName = "start";
@@ -112,12 +112,12 @@ export class StartPositionCalculator {
     }
 
     private getProperty(layer: ITiledMapLayer | ITiledMap, name: string): string | boolean | number | undefined {
-        const properties: ITiledMapLayerProperty[] | undefined = layer.properties;
+        const properties: ITiledMapProperty[] | undefined = layer.properties;
         if (!properties) {
             return undefined;
         }
         const obj = properties.find(
-            (property: ITiledMapLayerProperty) => property.name.toLowerCase() === name.toLowerCase()
+            (property: ITiledMapProperty) => property.name.toLowerCase() === name.toLowerCase()
         );
         if (obj === undefined) {
             return undefined;

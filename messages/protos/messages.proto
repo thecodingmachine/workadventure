@@ -94,6 +94,7 @@ message ClientToServerMessage {
     ReportPlayerMessage reportPlayerMessage = 11;
     QueryJitsiJwtMessage queryJitsiJwtMessage = 12;
     EmotePromptMessage emotePromptMessage = 13;
+    VariableMessage variableMessage = 14;
   }
 }
 
@@ -105,6 +106,20 @@ message ItemEventMessage {
   string event = 2;
   string stateJson = 3;
   string parametersJson = 4;
+}
+
+message VariableMessage {
+  string name = 1;
+  string value = 2;
+}
+
+/**
+ * A variable, along the tag describing who it is targeted at
+ */
+message VariableWithTagMessage {
+  string name = 1;
+  string value = 2;
+  string readableBy = 3;
 }
 
 message PlayGlobalMessage {
@@ -133,6 +148,8 @@ message SubMessage {
     UserLeftMessage userLeftMessage = 5;
     ItemEventMessage itemEventMessage = 6;
     EmoteEventMessage emoteEventMessage = 7;
+    VariableMessage variableMessage = 8;
+    ErrorMessage errorMessage = 9;
   }
 }
 
@@ -180,6 +197,7 @@ message RoomJoinedMessage {
   repeated ItemStateMessage item = 3;
   int32 currentUserId = 4;
   repeated string tag = 5;
+  repeated VariableMessage variable = 6;
 }
 
 message WebRtcStartMessage {
@@ -318,6 +336,10 @@ message ZoneMessage {
   int32 y = 3;
 }
 
+message RoomMessage {
+  string roomId = 1;
+}
+
 message PusherToBackMessage {
   oneof message {
     JoinRoomMessage joinRoomMessage = 1;
@@ -334,6 +356,7 @@ message PusherToBackMessage {
     SendUserMessage sendUserMessage = 12;
     BanUserMessage banUserMessage = 13;
     EmotePromptMessage emotePromptMessage = 14;
+    VariableMessage variableMessage = 15;
   }
 }
 
@@ -352,8 +375,21 @@ message SubToPusherMessage {
     SendUserMessage sendUserMessage = 7;
     BanUserMessage banUserMessage = 8;
     EmoteEventMessage emoteEventMessage = 9;
+    ErrorMessage errorMessage = 10;
   }
 }
+
+message BatchToPusherRoomMessage {
+  repeated SubToPusherRoomMessage payload = 2;
+}
+
+message SubToPusherRoomMessage {
+  oneof message {
+    VariableWithTagMessage variableMessage = 1;
+    ErrorMessage errorMessage = 2;
+  }
+}
+
 
 /*message BatchToAdminPusherMessage {
   repeated SubToAdminPusherMessage payload = 2;
@@ -424,9 +460,13 @@ message EmptyMessage {
 
 }
 
+/**
+ * Service handled by the "back". Pusher servers connect to this service.
+ */
 service RoomManager {
-  rpc joinRoom(stream PusherToBackMessage) returns (stream ServerToClientMessage);
-  rpc listenZone(ZoneMessage) returns (stream BatchToPusherMessage);
+  rpc joinRoom(stream PusherToBackMessage) returns (stream ServerToClientMessage); // Holds a connection between one given client and the back
+  rpc listenZone(ZoneMessage) returns (stream BatchToPusherMessage); // Connection used to send to a pusher messages related to a given zone of a given room
+  rpc listenRoom(RoomMessage) returns (stream BatchToPusherRoomMessage); // Connection used to send to a pusher messages related to a given room
   rpc adminRoom(stream AdminPusherToBackMessage) returns (stream ServerToAdminClientMessage);
   rpc sendAdminMessage(AdminMessage) returns (EmptyMessage);
   rpc sendGlobalAdminMessage(AdminGlobalMessage) returns (EmptyMessage);

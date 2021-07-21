@@ -12,6 +12,9 @@ const GRPC_PORT = parseInt(process.env.GRPC_PORT || "50051") || 50051;
 export const SOCKET_IDLE_TIMER = parseInt(process.env.SOCKET_IDLE_TIMER as string) || 30; // maximum time (in second) without activity before a socket is closed
 export const TURN_STATIC_AUTH_SECRET = process.env.TURN_STATIC_AUTH_SECRET || "";
 export const MAX_PER_GROUP = parseInt(process.env.MAX_PER_GROUP || "4");
+export const REDIS_HOST = process.env.REDIS_HOST || undefined;
+export const REDIS_PORT = parseInt(process.env.REDIS_PORT || "6379") || 6379;
+export const REDIS_PASSWORD = process.env.REDIS_PASSWORD || undefined;
 
 export {
     MINIMUM_DISTANCE,

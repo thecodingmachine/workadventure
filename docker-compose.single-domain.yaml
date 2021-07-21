@@ -120,6 +120,8 @@ services:
       JITSI_URL: $JITSI_URL
       JITSI_ISS: $JITSI_ISS
       MAX_PER_GROUP: "$MAX_PER_GROUP"
+      REDIS_HOST: redis
+      NODE_ENV: development
     volumes:
       - ./back:/usr/src/app
     labels:
@@ -167,6 +169,9 @@ services:
       - ./back:/usr/src/back
       - ./front:/usr/src/front
       - ./pusher:/usr/src/pusher
+
+  redis:
+    image: redis:6
 
 #  coturn:
 #    image: coturn/coturn:4.5.2

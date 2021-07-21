@@ -16,7 +16,7 @@ export interface ITiledMap {
      * Map orientation (orthogonal)
      */
     orientation: string;
-    properties?: ITiledMapLayerProperty[];
+    properties?: ITiledMapProperty[];
 
     /**
      * Render order (right-down)
@@ -33,7 +33,7 @@ export interface ITiledMap {
     type?: string;
 }
 
-export interface ITiledMapLayerProperty {
+export interface ITiledMapProperty {
     name: string;
     type: string;
     value: string | boolean | number | undefined;
@@ -51,7 +51,7 @@ export interface ITiledMapGroupLayer {
     id?: number;
     name: string;
     opacity: number;
-    properties?: ITiledMapLayerProperty[];
+    properties?: ITiledMapProperty[];
 
     type: "group";
     visible: boolean;
@@ -69,7 +69,7 @@ export interface ITiledMapTileLayer {
     height: number;
     name: string;
     opacity: number;
-    properties?: ITiledMapLayerProperty[];
+    properties?: ITiledMapProperty[];
     encoding?: string;
     compression?: string;
 
@@ -91,7 +91,7 @@ export interface ITiledMapObjectLayer {
     height: number;
     name: string;
     opacity: number;
-    properties?: ITiledMapLayerProperty[];
+    properties?: ITiledMapProperty[];
     encoding?: string;
     compression?: string;
 
@@ -117,7 +117,7 @@ export interface ITiledMapObject {
     gid: number;
     height: number;
     name: string;
-    properties: { [key: string]: string };
+    properties?: ITiledMapProperty[];
     rotation: number;
     type: string;
     visible: boolean;
@@ -141,6 +141,7 @@ export interface ITiledMapObject {
     polyline: { x: number; y: number }[];
 
     text?: ITiledText;
+    template?: string;
 }
 
 export interface ITiledText {
@@ -163,7 +164,7 @@ export interface ITiledTileSet {
     imagewidth: number;
     margin: number;
     name: string;
-    properties: { [key: string]: string };
+    properties?: ITiledMapProperty[];
     spacing: number;
     tilecount: number;
     tileheight: number;
@@ -182,7 +183,7 @@ export interface ITile {
     id: number;
     type?: string;
 
-    properties?: Array<ITiledMapLayerProperty>;
+    properties?: ITiledMapProperty[];
 }
 
 export interface ITiledMapTerrain {

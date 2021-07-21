@@ -5,6 +5,8 @@ import {
     AdminPusherToBackMessage,
     AdminRoomMessage,
     BanMessage,
+    BatchToPusherMessage,
+    BatchToPusherRoomMessage,
     EmotePromptMessage,
     EmptyMessage,
     ItemEventMessage,
@@ -13,17 +15,18 @@ import {
     PusherToBackMessage,
     QueryJitsiJwtMessage,
     RefreshRoomPromptMessage,
+    RoomMessage,
     ServerToAdminClientMessage,
-    ServerToClientMessage,
     SilentMessage,
     UserMovesMessage,
+    VariableMessage,
     WebRtcSignalToServerMessage,
     WorldFullWarningToRoomMessage,
     ZoneMessage,
 } from "./Messages/generated/messages_pb";
 import { sendUnaryData, ServerDuplexStream, ServerUnaryCall, ServerWritableStream } from "grpc";
 import { socketManager } from "./Services/SocketManager";
-import { emitError } from "./Services/MessageHelpers";
+import { emitError, emitErrorOnRoomSocket, emitErrorOnZoneSocket } from "./Services/MessageHelpers";
 import { User, UserSocket } from "./Model/User";
 import { GameRoom } from "./Model/GameRoom";
 import Debug from "debug";
@@ -32,7 +35,8 @@ import { Admin } from "./Model/Admin";
 const debug = Debug("roommanager");
 
 export type AdminSocket = ServerDuplexStream<AdminPusherToBackMessage, ServerToAdminClientMessage>;
-export type ZoneSocket = ServerWritableStream<ZoneMessage, ServerToClientMessage>;
+export type ZoneSocket = ServerWritableStream<ZoneMessage, BatchToPusherMessage>;
+export type RoomSocket = ServerWritableStream<RoomMessage, BatchToPusherRoomMessage>;
 
 const roomManager: IRoomManagerServer = {
     joinRoom: (call: UserSocket): void => {
@@ -55,7 +59,8 @@ const roomManager: IRoomManagerServer = {
                                     //Connexion may have been closed before the init was finished, so we have to manually disconnect the user.
                                     socketManager.leaveRoom(gameRoom, myUser);
                                 }
-                            });
+                            })
+                            .catch((e) => emitError(call, e));
                     } else {
                         throw new Error("The first message sent MUST be of type JoinRoomMessage");
                     }
@@ -72,6 +77,8 @@ const roomManager: IRoomManagerServer = {
                         socketManager.handleSilentMessage(room, user, message.getSilentmessage() as SilentMessage);
                     } else if (message.hasItemeventmessage()) {
                         socketManager.handleItemEvent(room, user, message.getItemeventmessage() as ItemEventMessage);
+                    } else if (message.hasVariablemessage()) {
+                        socketManager.handleVariableEvent(room, user, message.getVariablemessage() as VariableMessage);
                     } else if (message.hasWebrtcsignaltoservermessage()) {
                         socketManager.emitVideo(
                             room,
@@ -136,20 +143,54 @@ const roomManager: IRoomManagerServer = {
         debug("listenZone called");
         const zoneMessage = call.request;
 
-        socketManager.addZoneListener(call, zoneMessage.getRoomid(), zoneMessage.getX(), zoneMessage.getY());
+        socketManager
+            .addZoneListener(call, zoneMessage.getRoomid(), zoneMessage.getX(), zoneMessage.getY())
+            .catch((e) => {
+                emitErrorOnZoneSocket(call, e.toString());
+            });
 
         call.on("cancelled", () => {
             debug("listenZone cancelled");
-            socketManager.removeZoneListener(call, zoneMessage.getRoomid(), zoneMessage.getX(), zoneMessage.getY());
+            socketManager
+                .removeZoneListener(call, zoneMessage.getRoomid(), zoneMessage.getX(), zoneMessage.getY())
+                .catch((e) => console.error(e));
             call.end();
         });
 
         call.on("close", () => {
             debug("listenZone connection closed");
-            socketManager.removeZoneListener(call, zoneMessage.getRoomid(), zoneMessage.getX(), zoneMessage.getY());
+            socketManager
+                .removeZoneListener(call, zoneMessage.getRoomid(), zoneMessage.getX(), zoneMessage.getY())
+                .catch((e) => console.error(e));
         }).on("error", (e) => {
             console.error("An error occurred in listenZone stream:", e);
-            socketManager.removeZoneListener(call, zoneMessage.getRoomid(), zoneMessage.getX(), zoneMessage.getY());
+            socketManager
+                .removeZoneListener(call, zoneMessage.getRoomid(), zoneMessage.getX(), zoneMessage.getY())
+                .catch((e) => console.error(e));
+            call.end();
+        });
+    },
+
+    listenRoom(call: RoomSocket): void {
+        debug("listenRoom called");
+        const roomMessage = call.request;
+
+        socketManager.addRoomListener(call, roomMessage.getRoomid()).catch((e) => {
+            emitErrorOnRoomSocket(call, e.toString());
+        });
+
+        call.on("cancelled", () => {
+            debug("listenRoom cancelled");
+            socketManager.removeRoomListener(call, roomMessage.getRoomid()).catch((e) => console.error(e));
+            call.end();
+        });
+
+        call.on("close", () => {
+            debug("listenRoom connection closed");
+            socketManager.removeRoomListener(call, roomMessage.getRoomid()).catch((e) => console.error(e));
+        }).on("error", (e) => {
+            console.error("An error occurred in listenRoom stream:", e);
+            socketManager.removeRoomListener(call, roomMessage.getRoomid()).catch((e) => console.error(e));
             call.end();
         });
     },
@@ -165,9 +206,12 @@ const roomManager: IRoomManagerServer = {
                 if (room === null) {
                     if (message.hasSubscribetoroom()) {
                         const roomId = message.getSubscribetoroom();
-                        socketManager.handleJoinAdminRoom(admin, roomId).then((gameRoom: GameRoom) => {
-                            room = gameRoom;
-                        });
+                        socketManager
+                            .handleJoinAdminRoom(admin, roomId)
+                            .then((gameRoom: GameRoom) => {
+                                room = gameRoom;
+                            })
+                            .catch((e) => console.error(e));
                     } else {
                         throw new Error("The first message sent MUST be of type JoinRoomMessage");
                     }
@@ -192,11 +236,9 @@ const roomManager: IRoomManagerServer = {
         });
     },
     sendAdminMessage(call: ServerUnaryCall<AdminMessage>, callback: sendUnaryData<EmptyMessage>): void {
-        socketManager.sendAdminMessage(
-            call.request.getRoomid(),
-            call.request.getRecipientuuid(),
-            call.request.getMessage()
-        );
+        socketManager
+            .sendAdminMessage(call.request.getRoomid(), call.request.getRecipientuuid(), call.request.getMessage())
+            .catch((e) => console.error(e));
 
         callback(null, new EmptyMessage());
     },
@@ -207,26 +249,33 @@ const roomManager: IRoomManagerServer = {
     },
     ban(call: ServerUnaryCall<BanMessage>, callback: sendUnaryData<EmptyMessage>): void {
         // FIXME Work in progress
-        socketManager.banUser(call.request.getRoomid(), call.request.getRecipientuuid(), call.request.getMessage());
+        socketManager
+            .banUser(call.request.getRoomid(), call.request.getRecipientuuid(), call.request.getMessage())
+            .catch((e) => console.error(e));
 
         callback(null, new EmptyMessage());
     },
     sendAdminMessageToRoom(call: ServerUnaryCall<AdminRoomMessage>, callback: sendUnaryData<EmptyMessage>): void {
-        socketManager.sendAdminRoomMessage(call.request.getRoomid(), call.request.getMessage());
+        // FIXME: we could improve return message by returning a Success|ErrorMessage message
+        socketManager
+            .sendAdminRoomMessage(call.request.getRoomid(), call.request.getMessage())
+            .catch((e) => console.error(e));
         callback(null, new EmptyMessage());
     },
     sendWorldFullWarningToRoom(
         call: ServerUnaryCall<WorldFullWarningToRoomMessage>,
         callback: sendUnaryData<EmptyMessage>
     ): void {
-        socketManager.dispatchWorlFullWarning(call.request.getRoomid());
+        // FIXME: we could improve return message by returning a Success|ErrorMessage message
+        socketManager.dispatchWorldFullWarning(call.request.getRoomid()).catch((e) => console.error(e));
         callback(null, new EmptyMessage());
     },
     sendRefreshRoomPrompt(
         call: ServerUnaryCall<RefreshRoomPromptMessage>,
         callback: sendUnaryData<EmptyMessage>
     ): void {
-        socketManager.dispatchRoomRefresh(call.request.getRoomid());
+        // FIXME: we could improve return message by returning a Success|ErrorMessage message
+        socketManager.dispatchRoomRefresh(call.request.getRoomid()).catch((e) => console.error(e));
         callback(null, new EmptyMessage());
     },
 };

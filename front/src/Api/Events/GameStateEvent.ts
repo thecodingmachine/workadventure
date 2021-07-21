@@ -4,10 +4,11 @@ export const isGameStateEvent = new tg.IsInterface()
     .withProperties({
         roomId: tg.isString,
         mapUrl: tg.isString,
-        nickname: tg.isUnion(tg.isString, tg.isNull),
+        nickname: tg.isString,
         uuid: tg.isUnion(tg.isString, tg.isUndefined),
         startLayerName: tg.isUnion(tg.isString, tg.isNull),
         tags: tg.isArray(tg.isString),
+        variables: tg.isObject,
     })
     .get();
 /**

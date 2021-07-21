@@ -11,12 +11,29 @@ import nav from "./Api/iframe/nav";
 import controls from "./Api/iframe/controls";
 import ui from "./Api/iframe/ui";
 import sound from "./Api/iframe/sound";
-import room from "./Api/iframe/room";
-import player from "./Api/iframe/player";
+import room, {setMapURL, setRoomId} from "./Api/iframe/room";
+import state, {initVariables} from "./Api/iframe/state";
+import player, {setPlayerName, setTags, setUuid} from "./Api/iframe/player";
 import type { ButtonDescriptor } from "./Api/iframe/Ui/ButtonDescriptor";
 import type { Popup } from "./Api/iframe/Ui/Popup";
 import type { Sound } from "./Api/iframe/Sound/Sound";
-import { answerPromises, sendToWorkadventure} from "./Api/iframe/IframeApiContribution";
+import {answerPromises, queryWorkadventure, sendToWorkadventure} from "./Api/iframe/IframeApiContribution";
+
+const initPromise = new Promise<void>((resolve) => {
+// Notify WorkAdventure that we are ready to receive data
+    queryWorkadventure({
+        type: 'getState',
+        data: undefined
+    }).then((state => {
+        setPlayerName(state.nickname);
+        setRoomId(state.roomId);
+        setMapURL(state.mapUrl);
+        setTags(state.tags);
+        setUuid(state.uuid);
+        initVariables(state.variables as Map<string, unknown>);
+        resolve();
+    }));
+});
 
 const wa = {
     ui,
@@ -26,6 +43,11 @@ const wa = {
     sound,
     room,
     player,
+    state,
+
+    onInit(): Promise<void> {
+        return initPromise;
+    },
 
     // All methods below are deprecated and should not be used anymore.
     // They are kept here for backward compatibility.
@@ -170,9 +192,20 @@ window.addEventListener(
     }
     const payload = message.data;
 
-    console.debug(payload);
+    //console.debug(payload);
 
-    if (isIframeAnswerEvent(payload)) {
+    if (isIframeErrorAnswerEvent(payload)) {
+        const queryId = payload.id;
+        const payloadError = payload.error;
+
+        const resolver = answerPromises.get(queryId);
+        if (resolver === undefined) {
+            throw new Error('In Iframe API, got an error answer for a question that we have no track of.');
+        }
+        resolver.reject(new Error(payloadError));
+
+        answerPromises.delete(queryId);
+    } else if (isIframeAnswerEvent(payload)) {
         const queryId = payload.id;
         const payloadData = payload.data;
 
@@ -181,17 +214,6 @@ window.addEventListener(
             throw new Error('In Iframe API, got an answer for a question that we have no track of.');
         }
         resolver.resolve(payloadData);
-
-        answerPromises.delete(queryId);
-    } else if (isIframeErrorAnswerEvent(payload)) {
-        const queryId = payload.id;
-        const payloadError = payload.error;
-
-        const resolver = answerPromises.get(queryId);
-        if (resolver === undefined) {
-            throw new Error('In Iframe API, got an error answer for a question that we have no track of.');
-        }
-        resolver.reject(payloadError);
 
         answerPromises.delete(queryId);
     } else if (isIframeResponseEventWrapper(payload)) {

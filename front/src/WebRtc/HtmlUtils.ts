@@ -2,9 +2,9 @@ export class HtmlUtils {
     public static getElementByIdOrFail<T extends HTMLElement>(id: string): T {
         const elem = document.getElementById(id);
         if (HtmlUtils.isHtmlElement<T>(elem)) {
-           return elem;
+            return elem;
         }
-        throw new Error("Cannot find HTML element with id '"+id+"'");
+        throw new Error("Cannot find HTML element with id '" + id + "'");
     }
 
     public static querySelectorOrFail<T extends HTMLElement>(selector: string): T {
@@ -12,7 +12,7 @@ export class HtmlUtils {
         if (HtmlUtils.isHtmlElement<T>(elem)) {
             return elem;
         }
-        throw new Error("Cannot find HTML element with selector '"+selector+"'");
+        throw new Error("Cannot find HTML element with selector '" + selector + "'");
     }
 
     public static removeElementByIdOrFail<T extends HTMLElement>(id: string): T {
@@ -21,12 +21,12 @@ export class HtmlUtils {
             elem.remove();
             return elem;
         }
-        throw new Error("Cannot find HTML element with id '"+id+"'");
+        throw new Error("Cannot find HTML element with id '" + id + "'");
     }
 
     public static escapeHtml(html: string): string {
-        const text = document.createTextNode(html.replace(/(\r\n|\r|\n)/g,'<br/>'));
-        const p = document.createElement('p');
+        const text = document.createTextNode(html.replace(/(\r\n|\r|\n)/g, "<br/>"));
+        const p = document.createElement("p");
         p.appendChild(text);
         return p.innerHTML;
     }
@@ -35,7 +35,7 @@ export class HtmlUtils {
         const urlRegex = /(https?:\/\/[^\s]+)/g;
         text = HtmlUtils.escapeHtml(text);
         return text.replace(urlRegex, (url: string) => {
-            const link = document.createElement('a');
+            const link = document.createElement("a");
             link.href = url;
             link.target = "_blank";
             const text = document.createTextNode(url);
